@@ -1,0 +1,29 @@
+@mixin light {
+  --color-primary: theme('colors.stone.700');
+  --color-secondary: theme('colors.stone.400');
+  --color-inverse: theme('colors.white');
+  --color-inverse-secondary: theme('colors.stone.50');
+
+  .only-light {
+    display: initial;
+  }
+
+  .only-dark {
+    display: none;
+  }
+}
+
+@mixin dark {
+  --color-primary: theme('colors.white');
+  --color-secondary: theme('colors.gray.400');
+  --color-inverse: theme('colors.midnight.800');
+  --color-inverse-secondary: theme('colors.midnight.700');
+
+  .only-light {
+    display: none;
+  }
+
+  .only-dark {
+    display: initial;
+  }
+}

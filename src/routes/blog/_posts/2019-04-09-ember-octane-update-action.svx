@@ -1,0 +1,271 @@
+---
+title: "Ember Octane Update: What's up with `@action`?"
+tagline: ''
+---
+
+It's been a little over two weeks since EmberConf, and three weeks since we launched the Ember Octane preview period! In that time the core teams have been hard at work smoothing over the rough edges and getting the new features ready for prime time in stable Ember. We don't have a definitive target for the release that will officially become Octane just yet, but we've already surfaced a number of bugs and issues that we're addressing currently, and have enabled Decorators in beta - they're currently slated to be on in the 3.10.0 release - so overall progress is being made rapidly!
+
+Some of the issues, however, are less about bugs and more about the nature of the APIs themselves, and confusion surrounding them. The biggest piece of feedback we received at EmberConf was that the new `@action` decorator _in particular_ seemed unnecessary and redundant. Experienced Ember users were confused as to why we were recommending that `@action` be applied to their methods, when `{{action}}` seemed to work just fine without it? In addition, folks asked why we weren't recommending using the `onclick={{action ...}}` style of event handling, since it seems more straightforward and flexible than `{{action}}`.
+
+The answer to both these questions was that we were planning on landing a more substantial rethink of event handling sometime post-Octane. We discussed pushing the new features through as part of Octane originally, but were afraid that it may end up being too much change too quickly. As it turned out, however, it ended up being _more_ confusing to be in a half-way state, so we immediately made it a priority to land the new event handling APIs after EmberConf.
+
+The result of this work are two RFCs which have recently been moved into Final Comment Period:
+
+- [The `{{on}}` modifier](https://github.com/emberjs/rfcs/pull/471)
+- [The `{{fn}}` helper](https://github.com/emberjs/rfcs/pull/470)
+
+Between these and the `@action` decorator, we have a complete picture of event handling in Ember Octane, one which is more well defined and future-proofed. These RFCs have been in design for some time now - the `{{on}}` modifier was first suggested by in ~~[the original Modifiers RFC](https://github.com/emberjs/rfcs/pull/353)~~ (Correction: It was actually discussed as far back as the [_original_ original Modifiers RFC](https://github.com/emberjs/rfcs/pull/112), as the `{{on-event}}` modifier, and may have been discussed before that!), and the `{{fn}}` helper, originally the `{{bind}}` helper, has been discussed alongside it for about as long - but it was the feedback from the community that made it clear we needed to solve this now.
+
+## What's wrong with `{{action}}`?
+
+"Action" is an overloaded term in Ember parlance. Actions are:
+
+1. Methods on the `actions` hash
+
+   ```javascript
+   actions: {
+     helloWorld() {}
+   }
+   ```
+
+2. But also modifiers that setup event handlers?
+
+   ```handlebars
+   <div {{action 'helloWorld'}}></div>
+   ```
+
+3. Oh, and they are partial applied functions too:
+
+   ```handlebars
+   {{some-component onClick=(action 'addNumbers' 1 2 3)}}
+   ```
+
+4. Also, they usually receive strings, but can also receive functions?
+
+   ```handlebars
+   <div {{action this.someMethod}}></div>
+   ```
+
+They're something we pass downward, but also something we send back up (as in Data Down, Actions Up). They are the way you interact with the DOM, except when you need to actually access the _event_ itself, or when you use the `click` method on a classic component class. The point is, if you try to ask a group of experienced Ember devs to define what an "action" is, you may get a few contradicting/overlapping opinions 😄
+
+Actions have served many different purposes over the years, and this makes them difficult to learn, to teach, and to repurpose. Ryan Tablada did an excellent job when writing the `fn` RFC to describe the many different ways one could accomplish the same end goal with the `{{action}}` modifier and helper:
+
+```handlebars
+<button {{action 'increment' 5}}>Click</button>
+<button {{action this.increment 5}}>Click</button>
+<button onclick={{action 'increment' 5}}>Click</button>
+<button onclick={{action this.increment 5}}>Click</button>
+<button {{action (action 'increment' 5)}}>Click</button>
+<button {{action (action this.increment 5)}}>Click</button>
+```
+
+We wanted to separate out the different responsibilities here, and the `@action` decorator was the first part of the puzzle, and the other two pieces are the `{{fn}}` helper and `{{on}}` modifier, but I'm getting ahead of myself here.
+
+### What even are the responsibilities of actions?
+
+In total, actions concretely do four things in templates:
+
+1. Turn string actions into actual functions that call the correct method, e.g. `{{action 'foo'}}` calls `this.actions.foo`. They can also receive a method directly, bypassing the need for this.
+2. Provide the correct `this` context (binding). Functions are passed around as values in templates, so if they aren't already bound, they need to be somehow.
+3. Partially apply methods (e.g. passing arguments like `{{action 'foo' 1 2 3}}`). Actions are functions that are generally called _later_, so if you want to pass parameters you need to essentially create a _new_ function that stores the parameters in it.
+4. Add event handlers that call these methods.
+
+Both the helper and modifier do binding and partial application, but only the modifier adds event handlers.
+
+The first responsibility, turning strings into actual methods, is not something we want to continue supporting in the future. It really was part of the older non-native class model, and now that we are moving toward native classes it makes much more sense to just reference methods directly of the list. So, we needed new APIs for the other three responsibilities. We thought long and hard, and came up with:
+
+- `@action` for binding
+- `{{on}}` for adding event handlers
+- `{{fn}}` for partial application
+
+## `@action`
+
+The `@action` decorator in modern components can be applied directly to a method to bind it:
+
+```javascript
+class Profile extends Component {
+  @action
+  save() {
+    this.args.model.save();
+  }
+}
+```
+
+Binding ensures that `this` will always be correct - it'll always refer to the `Profile` component instance. If that seems confusing, then I really am sorry, because it is, and the source of so, so much pain in JavaScript 😞 I recommend [this guide](https://javascript.info/object-methods#this-is-not-bound) to understanding the details here.
+
+However, if you've used the `{{action}}` helper much, you may have noticed that it already does this somehow! In fact, this will work today:
+
+```javascript
+class Profile extends Component {
+  save() {
+    this.args.model.save();
+  }
+}
+```
+
+```handlebars
+<button {{action this.save}}></button>
+```
+
+So what's going on there? `{{action}}` has always been special. It actually has access to the ambient `this` of a template - via a template transform. The `button` code above gets turned into this when it compiles:
+
+```handlebars
+<button {{action this this.save}}></button>
+```
+
+From there, we're able to call the function with the correct context and everything works. Aside from that funky template transform, this seems pretty great right? We don't have to pass any extra args to the modifier, and we have less code overall? So what's the issue?
+
+There are a few, it turns out. First, it's just not always correct. Consider if you wanted to, say, reference a method on a _service_ instead of the class:
+
+```handlebars
+<button {{action this.save}} {{action this.tracking.sendEvent 'saved'}}>
+</button>
+```
+
+You might expect this to work, but it will attempt to call the `sendEvent` method with the _component_ instead of the _service_ as `this`, and it will most likely break. @serabe's [bind helper](https://github.com/Serabe/ember-bind-helper) provided an alternative possibility here, by transforming to pass the last chain of the context along:
+
+```handlebars
+{{bind this.tracking.sendEvent context=this.tracking}}
+```
+
+So we could in theory have created a new helper that does this instead, but there are deeper problems here. Really, the question we should be asking is, should helpers be able to do something like this at all?
+
+The ability to access the ambient context in a helper is actually pretty strange as a language feature. Helpers are analogous to _functions_ in other languages like JavaScript. So, if any given helper was able to access a special keyword, like `context`, to get the current context it was executing in, it would actually be similar to if something like this worked in JavaScript:
+
+```javascript
+function doUpdates() {
+  this.name = 'Liz';
+}
+
+class Person {
+  updateName() {
+    doUpdates();
+  }
+}
+```
+
+Imagine if a function could access the `this` of a class, just by being called inside the class. That's essentially what `{{action}}` is able to do, it can access the `this` of a template just by being called in that template.
+
+I don't know about you, but this sets off _major_ alarms for me on a language design level. Helpers being able to access context implicitly like this in general seems like it could just _maybe_ be problematic 😬
+
+There is another alternative here - we could say `action` is not a _helper_, but a _keyword_. A special, unique syntax built into the template language. This would work, but it means that we would have to explain this uniqueness to users, and explain why, for instance, they have to wrap every single one of their methods in `{{action}}`, every time they use it. Now that more modifiers are becoming available, this is going to become redundant quickly:
+
+```handlebars
+<button {{on 'click' (action this.save)}}></button>
+
+<SomeComponent @onUpdate={{action this.save}} />
+```
+
+### Binding at the source
+
+All of these problems come from trying to add context back to a method _from the template_, when really, we can turn this problem around. In templates, we care about what calls a methods, but we shouldn't care about where it came from. Really, that's a concern of the _method_. After all, some functions/methods don't even need to be bound, if they never use `this` for instance:
+
+```javascript
+class Foo {
+  logSomething() {
+    console.log('no need to bind me!');
+  }
+}
+```
+
+Though these should probably just be pure functions (which _may_ be coming sooner rather than later with template imports, but that's a topic for another time). Additionally, you might actually want to use a bound method somewhere else! For instance, you could use it in a `setTimeout` or `setInterval`:
+
+```javascript
+class Timer {
+  constructor() {
+    setInternval(this.updateTime, 1000);
+  }
+
+  @action
+  updateTime() {
+    this.currentTime = performance.now();
+  }
+}
+```
+
+Or you may want to pass around an API for other components to consume. This also solves the problem with services - they can have actions too!
+
+Additionally, this gives the user a really good hint when looking at this code that the method will be used in the template, or asynchronously somewhere else. This is really helpful when learning how a given component works, since otherwise it is just a bucket of methods and fields, without context for what is connected to the template and what isn't.
+
+Finally, the authors of the decorator spec are explicitly _designing_ for this exact decorator. This is a really common issue in general in JavaScript (thank you weird `this` 🙃), and decorators solve it neatly _everywhere_. In fact, the [`@bound`](https://github.com/tc39/proposal-decorators#bound) decorator is a candidate for being built into the browser in the future, which would potentially make decorators even more performant.
+
+With all this in mind, we believe that using a decorator is the best way to bind context, and that we shouldn't be mixing these concerns up into template helpers or syntax. This also neatly divides the responsibilities, so we have one tool for each job. Now, onto `{{on}}`!
+
+::: aside
+Note: There is an ongoing discussion about making a new decorator such as `@callback` or `@bound` to replace `@action` in the long run as well. Its functionality would be identical, sans-compatibility with old-school string actions, so the mental model is the same, as are all the other benefits, and this would primarily be about dropping the older "action" terminology and the baggage associated with it, and giving a more generic name to the functionality it provides. This new API would need to be RFC'd, so stay tuned!
+:::
+
+## `{{on}}`
+
+The `{{on}}` modifier is a replacement for the _event handling_ responsibilities of `{{action}}`. Its API is a thin wrapper around `addEventListener`, the bare native API for adding event handlers:
+
+```handlebars
+<button {{on 'click' this.handleClick passive=true}}>
+  Hello, world!
+</button>
+```
+
+You pass the event name and the handler function as the first and second positional parameters, and can pass additional options such as `capture` and `passive` as named parameters. Additionally, the event handler will receive the _event_, which was something that was not passed along by the `{{action}}` modifier, so users can truly use it as a full replacement for `{{action}}` and component event handlers, along with other libraries used for event handling like [ember-lifeline](https://github.com/ember-lifeline/ember-lifeline).
+
+`{{on}}` will suffer from the same problems as other event handlers and `onclick=` style handlers with regards to interop with `{{action}}`. Since `{{action}}` uses a global event dispatcher, it means that at times the ordering of individual event handlers will be messed up (see [Marie Chatfield's excellent deep dive](https://medium.com/square-corner-blog/deep-dive-on-ember-events-cf684fd3b808) for more details on that). Unfortunately, we couldn't find a way to ensure that there would be a completely smooth transition here - it would either be a toggle-able setting which would likely break existing apps all over the place, or a one-by-one transition where bugs would occasionally pop up, but be localized and possible to deal with incrementally. The RFC currently suggests that we accept that transitioning apps incrementally is better than trying to do a big-bang swap, and keeps the whole process much simpler on a technical level overall, so less things can go wrong.
+
+### Why not `onclick=`?
+
+You may be wondering, why can't we use the existing `on*=` properties that work in templates today?
+
+```handlebars
+<button onclick={{this.handleClick}}>
+  Hello, world!
+</button>
+```
+
+There are a few major reasons we opted not to go this route:
+
+1. `onclick=` _looks_ like an HTML attribute, but it's _actually_ a JavaScript property (e.g. something like `document.querySelector('button').onclick = ...`). It goes through a completely different process for being assigned, which could be confusing (and often is for debugging purposes) and requires additional complexity. In the future, this may be something we want to deprecate, in order to make templates more consistent overall.
+2. There's no way to pass options like `once`, `capture`, or `passive` to these properties, so there's no way to control the details of event handling.
+3. Assigning properties like this is _actively hostile_ toward Server Side Rendering. After all, properties cannot be serialized to the DOM or transferred as HTML, so we have to wait until we rehydrate and rerender before we can assign them. Since they are _properties_ and not modifiers, which were specifically designed to have well-defined behavior in SSR, it makes this process even more difficult.
+4. These properties do not work just like `addEventListener` (React users will tell you horror stories about [focus events](https://github.com/facebook/react/issues/6410)), and do not work consistently across different types of elements. For some elements, like `svg`, they don't work at all.
+5. They don't work at all with native web components, which are beginning to see more usage. Native web components expect event handlers to be attached using `addEventListener`, and send their own events. If we want to be able to interop with a wider range of custom components, we need a more generalized solution.
+
+Given these issues, it's clear we would definitely need some sort of modifier for advanced cases, even if `on*=` would work for most simple ones. The `{{on}}` modifier is overall not _that_ much more verbose than assigning to the property, and given that, it made sense to consolidate to a single solution for event handling in general in Ember.
+
+## `{{fn}}`
+
+Finally, we have our partial application helper, `{{fn}}`. Partial application is a fancy way of saying "make a new function with these parameters". So, for instance, when we do:
+
+```handlebars
+<div {{on 'click' (fn this.save model)}}></div>
+```
+
+What this translates to is:
+
+```javascript
+let eventHandler = (...args) => {
+  this.save(model, ...args);
+};
+
+element.addEventListener('click', eventHandler);
+```
+
+This is something that `{{action}}` was used for frequently in Ember apps in its helper form, especially when passing actions into subcomponents:
+
+```handlebars
+{{#power-select
+  selected=destination
+  options=cities
+  onchange=(action 'chooseDestination')
+  as |name|
+}}
+  {{name}}
+{{/power-select}}
+```
+
+The behavior of this helper was not at all that controversial - the hard part was the _name_. We spent a lot of time debating this on the core team and in the community, and we didn't find a term that was quite _perfect_. `bind` is strongly associated with binding `this`, and this helper isn't really about that at all. `with-args` was floated for a while, but was fairly verbose. `partial` was common in other languages, but both technical and taken by a (thankfully deprecated) feature in Ember.
+
+`fn` is the current proposal because it describes the value that is _returned_ - a new function - and because it's nice and terse for a commonly used feature. This new function is just like the old function, with some extra values added, and it's fairly reasonable to infer that parameters passed to `fn` are treated this way. It also matches with our other primitive helpers, `{{arr}}` and `{{hash}}` (which should really be `{{obj}}`, if anyone wants [to write that RFC](https://github.com/emberjs/rfcs/issues/473)!)
+
+## Conclusion
+
+That's all I have for the time being, like I said we're hard at work getting all of the other features landed for Octane, and we're absolutely loving all the feedback we're getting! Thanks so much to everyone who has raised issues, concerns, questions, bug reports, and so on. We wouldn't be able to do this without you ❤️Also, major thanks to [Ryan Tablada](http://ryantablada.com/) for helping out so much with the design here!
+
+We'll have more updates soon, so long for now!

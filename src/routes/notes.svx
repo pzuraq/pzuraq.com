@@ -1,0 +1,11 @@
+<h1 class="text-base text-secondary">
+  random thoughts, ideas, links to conversations, music, etc.
+  <br/>
+  like twitter but less terrible (I hope.)
+</h1>
+
+---
+
+::: aside
+Todo: Add something noteworthy
+:::

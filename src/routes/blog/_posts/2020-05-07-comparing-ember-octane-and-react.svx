@@ -1,0 +1,1138 @@
+---
+title: "Comparing Ember Octane and React"
+tagline: ""
+---
+
+In this post, I'm going to directly compare Ember and React, using the latest idioms and best practices from both frameworks. That means I'll be using Ember Octane, the latest Edition of Ember, and React's new hooks API. A lot has changed in both frameworks in the last couple years, so I think that its definitely a good time to take stock and see how they measure up!
+
+This comparison will focus on the programming models and developer experience of working in either framework. It will not focus on performance metrics, except in cases where developers must do additional work in order to write performant code. I'm also going to assume the reader has basic knowledge of both frameworks and their latest APIs. If you don't, you can check out the latest [Ember.js](https://guides.emberjs.com/release/) documentation, and the official [React hooks](https://reactjs.org/docs/hooks-intro.html) documentation for reference.
+
+I'll also note for full disclosure that I am an Ember.js core team member, and while I'm going to try to be as objective as possible in this post, I have my own personal bias here.
+
+Alright, let's get started!
+
+## The Example
+
+Since I'm pretty familiar with Ember and its best practices, I decided to start this post by finding a solid example of an idiomatic React component written with hooks. I wanted to make sure that the React example was well thought out and wouldn't have any beginner mistakes. After browsing around a bit, I landed on an example from the book [Road to React](https://www.roadtoreact.com/). The book is pretty well written and easy to follow, and very well reviewed by the community, so I thought it would be a good base for this post.
+
+Based on this example, I'm following a number of constraints:
+
+1. Minimal external libraries. The React example only includes one library, `axios`, to simplify data fetching, otherwise it is plain vanilla React. In keeping with that spirit, I've only included `axios` and a couple of minor libraries, `ember-truth-helpers` and `ember-modifier`, which are both considered idiomatic and part of the standard Ember programming model. Larger libraries like `ember-concurrency`, `ember-redux`, or `ember-data` might clean things up with higher level abstractions, but then we would be comparing apples to oranges. I want this comparison to be as 1-to-1 as possible.
+
+2. In keeping with the 1-to-1 theme, I'm going to avoid changing the structure of the example much, and try to keep them overall as similar as possible, while still being idiomatic. This includes things like data-flow in general, which is why I ended up using a similar clone-the-state approach for updating async state in the Ember example for instance (to keep it similar to the reducer in the React example).
+
+Below is one of the later code samples from the book, which incorporates a number of standard app behaviors and use cases. This example is for a basic search form which fetches search results from [Hacker News](https://news.ycombinator.com/), and can be seen [in action here](https://codesandbox.io/s/github/the-road-to-learn-react/hacker-stories/tree/hs/Async-Await-in-React) (based on the public [GitHub repo](https://github.com/the-road-to-learn-react/hacker-stories) from the author). I'll step through each portion of it in detail so we have some sense of what's going on here in just a moment, but first lets see the whole thing in its entirety, along with the equivalent in Ember Octane:
+
+```js
+import React from 'react';
+import axios from 'axios';
+
+const API_ENDPOINT = 'https://hn.algolia.com/api/v1/search?query=';
+
+const useSemiPersistentState = (key, initialState) => {
+  const [value, setValue] = React.useState(
+    localStorage.getItem(key) || initialState
+  );
+
+  React.useEffect(() => {
+    localStorage.setItem(key, value);
+  }, [value, key]);
+
+  return [value, setValue];
+};
+
+const storiesReducer = (state, action) => {
+  switch (action.type) {
+    case 'STORIES_FETCH_INIT':
+      return {
+        ...state,
+        isLoading: true,
+        isError: false,
+      };
+    case 'STORIES_FETCH_SUCCESS':
+      return {
+        ...state,
+        isLoading: false,
+        isError: false,
+        data: action.payload,
+      };
+    case 'STORIES_FETCH_FAILURE':
+      return {
+        ...state,
+        isLoading: false,
+        isError: true,
+      };
+    case 'REMOVE_STORY':
+      return {
+        ...state,
+        data: state.data.filter(
+          story => action.payload.objectID !== story.objectID
+        ),
+      };
+    default:
+      throw new Error();
+  }
+};
+
+const App = () => {
+  const [searchTerm, setSearchTerm] = useSemiPersistentState(
+    'search',
+    'React'
+  );
+
+  const [url, setUrl] = React.useState(
+    `${API_ENDPOINT}${searchTerm}`
+  );
+
+  const [stories, dispatchStories] = React.useReducer(
+    storiesReducer,
+    { data: [], isLoading: false, isError: false }
+  );
+
+  const handleFetchStories = React.useCallback(async () => {
+    dispatchStories({ type: 'STORIES_FETCH_INIT' });
+
+    try {
+      const result = await axios.get(url);
+
+      dispatchStories({
+        type: 'STORIES_FETCH_SUCCESS',
+        payload: result.data.hits,
+      });
+    } catch {
+      dispatchStories({ type: 'STORIES_FETCH_FAILURE' });
+    }
+  }, [url]);
+
+  React.useEffect(() => {
+    handleFetchStories();
+  }, [handleFetchStories]);
+
+  const handleRemoveStory = item => {
+    dispatchStories({
+      type: 'REMOVE_STORY',
+      payload: item,
+    });
+  };
+
+  const handleSearchInput = event => {
+    setSearchTerm(event.target.value);
+  };
+
+  const handleSearchSubmit = () => {
+    setUrl(`${API_ENDPOINT}${searchTerm}`);
+  };
+
+  return (
+    <div>
+      <h1>My Hacker Stories</h1>
+
+      <InputWithLabel
+        id="search"
+        value={searchTerm}
+        isFocused
+        onInputChange={handleSearchInput}
+      >
+        <strong>Search:</strong>
+      </InputWithLabel>
+
+      <button
+        type="button"
+        disabled={!searchTerm}
+        onClick={handleSearchSubmit}
+      >
+        Submit
+      </button>
+
+      <hr />
+
+      {stories.isError && <p>Something went wrong ...</p>}
+
+      {stories.isLoading ? (
+        <p>Loading ...</p>
+      ) : (
+        <List list={stories.data} onRemoveItem={handleRemoveStory} />
+      )}
+    </div>
+  );
+};
+
+const InputWithLabel = ({
+  id,
+  value,
+  type = 'text',
+  onInputChange,
+  isFocused,
+  children,
+}) => {
+  const inputRef = React.useRef();
+
+  React.useEffect(() => {
+    if (isFocused) {
+      inputRef.current.focus();
+    }
+  }, [isFocused]);
+
+  return (
+    <>
+      <label htmlFor={id}>{children}</label>
+      &nbsp;
+      <input
+        ref={inputRef}
+        id={id}
+        type={type}
+        value={value}
+        onChange={onInputChange}
+      />
+    </>
+  );
+};
+
+const List = ({ list, onRemoveItem }) =>
+  list.map(item => (
+    <Item
+      key={item.objectID}
+      item={item}
+      onRemoveItem={onRemoveItem}
+    />
+  ));
+
+const Item = ({ item, onRemoveItem }) => (
+  <div>
+    <span>
+      <a href={item.url}>{item.title}</a>
+    </span>
+    <span>{item.author}</span>
+    <span>{item.num_comments}</span>
+    <span>{item.points}</span>
+    <span>
+      <button type="button" onClick={() => onRemoveItem(item)}>
+        Dismiss
+      </button>
+    </span>
+  </div>
+);
+
+export default App;
+```
+
+And here is the Ember Octane equivalent (which you can see live [here](https://glitch.com/~comparing-ember-octane-and-react)):
+
+```js
+// /app/components/search-form.js
+import Component from '@glimmer/component';
+import axios from 'axios';
+import { tracked } from '@glimmer/tracking';
+import { action } from '@ember/object';
+
+const API_ENDPOINT = 'https://hn.algolia.com/api/v1/search?query=';
+
+export default class SearchForm extends Component {
+  @tracked searchTerm = localStorage.getItem('searchTerm') ?? 'Ember.js';
+
+  @tracked stories = {
+    data: [],
+    isLoading: false,
+    isError: false,
+  };
+
+  get url() {
+    return `${API_ENDPOINT}${this.searchTerm}`;
+  }
+
+  constructor(...args) {
+    super(...args);
+
+    this.fetchStories();
+  }
+
+  @action
+  handleSearchInput(event) {
+    let { value } = event.target;
+
+    this.searchTerm = value;
+    localStorage.set('searchTerm', value);
+  }
+
+  @action
+  handleRemoveStory({ objectID }) {
+    this.stories = {
+      ...this.stories,
+      data: this.stories.data.filter(
+        story => objectID !== story.objectID
+      ),
+    }
+  }
+
+  @action
+  async fetchStories() {
+    this.stories = {
+      ...this.stories,
+      isLoading: true,
+      isError: false,
+    };
+
+    try {
+      let result = await axios.get(this.url);
+
+      this.stories = {
+        ...this.stories,
+        data: result.data.hits,
+        isLoading: false,
+        isError: false,
+      };
+    } catch {
+      this.stories = {
+        ...this.stories,
+        isLoading: false,
+        isError: true,
+      };
+    }
+  }
+}
+
+```
+```handlebars
+<!-- /app/components/search-form.hbs -->
+<div>
+  <h1>My Hacker Stories</h1>
+
+  <InputWithLabel
+    @id="search"
+    @value={{this.searchTerm}}
+    @isFocused={{true}}
+    @onInputChange={{this.handleSearchInput}}
+  >
+    <strong>Search:</strong>
+  </InputWithLabel>
+
+  <button
+    type="button"
+    disabled={{not this.searchTerm}}
+    {{on "click" this.fetchStories}}
+  >
+    Submit
+  </button>
+
+  <hr />
+
+  {{#if this.stories.isError}}
+    <p>Something went wrong ...</p>
+  {{/if}}
+
+  {{#if this.stories.isLoading}}
+    <p>Loading ...</p>
+  {{else}}
+    <List @list={{this.stories.data}} @onRemoveItem={{this.handleRemoveStory}} />
+  {{/if}}
+</div>
+```
+```handlebars
+<!-- /app/components/input-with-label.hbs -->
+<label {{set-focus @isFocused}} for={{@id}}>{{yield}}</label>
+&nbsp;
+<input
+  id={{@id}}
+  value={{@value}}
+
+  type="text"
+  ...attributes
+
+  {{on "change" @onInputChange}}
+/>
+```
+```handlebars
+<!-- /app/components/list.hbs -->
+{{#each @list as |item|}}
+  <Item @item={{item}} @onRemoveItem={{@onRemoveItem}} />
+{{/each}}
+```
+```handlebars
+<!-- /app/components/item.hbs -->
+<div>
+  <span>
+    <a href={{@item.url}}>{{@item.title}}</a>
+  </span>
+  <span>{{@item.author}}</span>
+  <span>{{@item.num_comments}}</span>
+  <span>{{@item.points}}</span>
+  <span>
+    <button type="button" {{on "click" (fn @onRemoveItem @item)}}>
+      Dismiss
+    </button>
+  </span>
+</div>
+```
+```js
+// /app/modifiers/set-focus.js
+import { modifier } from 'ember-modifier';
+
+export default modifier((element, [isFocused]) => {
+  if (isFocused) {
+    element.focus();
+  }
+});
+```
+
+Ok, a lot going on there! Let's break it down a bit and dig into each example to see how it works, and what the tradeoffs are in their designs.
+
+## React
+
+We'll start on the React side by breaking down the `App` component, which is the entry point for the app. We'll break it down one section at a time, since it's a fairly large component, and dig into each part individually. Starting from the top:
+
+```js
+const App = () => {
+  const [searchTerm, setSearchTerm] = useSemiPersistentState(
+    'search',
+    'React'
+  );
+```
+
+Here we start off the definition of the component by creating some local state, the `searchTerm` which will be used to query Hacker News. You'll notice that this isn't the standard `useState` hook that React ships with - it's a custom hook, defined above. Let's look at the definition for it:
+
+```js
+const useSemiPersistentState = (key, initialState) => {
+  const [value, setValue] = React.useState(
+    localStorage.getItem(key) || initialState
+  );
+
+  React.useEffect(() => {
+    localStorage.setItem(key, value);
+  }, [value, key]);
+
+  return [value, setValue];
+};
+```
+
+So, this hook creates a piece of state using `useState`, and integrates it with `localStorage`. It sets the default value of the state to the value of the provided key in `localStorage`, and then uses `useEffect` to sync the state back to `localStorage` whenever it changes. It passes the `key` and `value` properties as memoization keys to `useEffect` in order to only do this when the value has actually changed. Finally, it returns both the `value` and `setValue` setter, so from a public API perspective it can effectively be used like `useState`. Moving on:
+
+```js
+  const [url, setUrl] = React.useState(
+    `${API_ENDPOINT}${searchTerm}`
+  );
+```
+
+Here we have create the `url` state, which is set to the default query value. The reason for creating a separate piece of state rather that simply deriving the state is so that it can be updated separately. This is important for how we fetch data, which we'll see in a moment. Next up, the `stories` state:
+
+```js
+  const [stories, dispatchStories] = React.useReducer(
+    storiesReducer,
+    { data: [], isLoading: false, isError: false }
+  );
+```
+
+This state represents the result of the query to Hacker News, and is implemented using the `useReducer` hook from React. This hook is basically a built in mini-version of Redux, and allows us to define some self-contained logic based around events. We can look at that logic above and see how it works:
+
+```js
+const storiesReducer = (state, action) => {
+  switch (action.type) {
+    case 'STORIES_FETCH_INIT':
+      return {
+        ...state,
+        isLoading: true,
+        isError: false,
+      };
+    case 'STORIES_FETCH_SUCCESS':
+      return {
+        ...state,
+        isLoading: false,
+        isError: false,
+        data: action.payload,
+      };
+    case 'STORIES_FETCH_FAILURE':
+      return {
+        ...state,
+        isLoading: false,
+        isError: true,
+      };
+    case 'REMOVE_STORY':
+      return {
+        ...state,
+        data: state.data.filter(
+          story => action.payload.objectID !== story.objectID
+        ),
+      };
+    default:
+      throw new Error();
+  }
+};
+```
+
+The reducer takes the current state, and an action, and combines them to produce the _next_ state. In this case, there are four events:
+
+1. Beginning a fetch
+2. Completing a fetch successfully
+3. Completing a fetch with an error
+4. Removing a story from the current results
+
+The first three events ensure that the `isLoading`, `isError`, and `data` properties on our state are always correctly in sync, and that no contradictory state can be reached (for instance `isError` and `isLoading` cannot both be true at the same time, it doesn't make sense). The last one allows our users to update the state and hide/remove search results.
+
+We'll see how all these events are hooked up and triggered in the next few sections of code, but one interesting thing to note is how we have to think about _updating_ the state here. The `REMOVE_STORY` action is a great example here, since we have to clone the `data` array and filter it to remove the story. In general, all mutations have to be thought about in these terms, since we're not allowed to mutate the state directly.
+
+<aside>
+  <p>
+    This is <strong>not</strong> meant to be a value judgement of any sort about mutability or immutability! This explanation is for those who may not be familiar with this approach to state management. I'll discuss the pros and cons of it later on, after the breakdown section.
+  </p>
+</aside>
+
+Next up, data fetching:
+
+```js
+  const handleFetchStories = React.useCallback(async () => {
+    dispatchStories({ type: 'STORIES_FETCH_INIT' });
+
+    try {
+      const result = await axios.get(url);
+
+      dispatchStories({
+        type: 'STORIES_FETCH_SUCCESS',
+        payload: result.data.hits,
+      });
+    } catch {
+      dispatchStories({ type: 'STORIES_FETCH_FAILURE' });
+    }
+  }, [url]);
+
+  React.useEffect(() => {
+    handleFetchStories();
+  }, [handleFetchStories]);
+```
+
+Here we create a callback function using `useCallback`. This is at first glance an interesting choice - couldn't we just create a normal callback and pass it down to the form component, so it can be called on submit? The reason we can't here is we also need to call the callback on _initial load_, the very first render. Rather than tracking this state separately with its own `useState`, we _memoize_ the callback function with `useCallback` by passing in the `[url]` parameter at the end there.
+
+We then call the callback using `useEffect` to actually load the data. This is memoized based on the callback itself - it reruns whenever `handleFetchStories` updates, and `handleFetchStories` updates whenever `url` updates. Since `url` is its own piece of state, this will happen whenever the user clicks the `Submit` button (we'll see how that works in a moment). This is why we needed to have the `url` be a separately controlled piece of state - if we based this flow on the `searchTerm` directly, then we would be triggering a new fetch every time the user updated the input, instead of only once when they click `Submit`.
+
+<aside>
+  <p>
+    It's worth noting that the author mentions in the book that they extracted out the callback here in order to demonstrate the technique, so this could potentially be simplified by using just memoizing <code>useEffect</code> based on <code>url</code> directly and not creating a separate callback.
+  </p>
+</aside>
+
+Alright, now that we understand the memoization/callback story, let's dig into the fetch logic. Whenever we begin fetching, we dispatch the `STORIES_FETCH_INIT` event to the reducer, resetting the state to its initial loading state. We then use a `try/catch` (this is an `async` function, so we can do that) to wrap a call to fetch with the current URL. If it succeeds without any issues, with dispatch the `STORIES_FETCH_SUCCESS` event, which includes the results, updating the state to show the latest results. If we hit an error, we enter the `catch` statement and dispatch the `STORIES_FETCH_FAILURE` event, alerting the user to the issue.
+
+Next up, the event handlers:
+
+```js
+  const handleRemoveStory = item => {
+    dispatchStories({
+      type: 'REMOVE_STORY',
+      payload: item,
+    });
+  };
+
+  const handleSearchInput = event => {
+    setSearchTerm(event.target.value);
+  };
+
+  const handleSearchSubmit = () => {
+    setUrl(`${API_ENDPOINT}${searchTerm}`)
+  };
+```
+
+These three functions are passed down to child components, and they ultimately are run when the user interacts with the UI. Going through them individually:
+
+- `handleRemoveStory` is run whenever the user clicks the `Dismiss` button next to a story, and dispatches the `REMOVE_STORY` event we saw earlier to the stories reducer.
+- `handleSearchInput` runs whenever the user types anything into the search input field, and updates the `searchTerm` state we saw at the very beginning of the `App` component. This doesn't do anything else on its own, until we _submit_ the form.
+- `handleSearchSubmit` runs when the user clicks the `Submit` button on the form. This sets the `url` state we saw earlier to the new search URL, combining the `API_ENDPOINT` constant and the `searchTerm` value that has presumably been updated by `setSearchTerm`. Updating `url` then triggers the update to `handleFetchStories` in the next render pass, which then does the fetch.
+
+Ok, that covers the majority of the application's program logic! Now we can dig into the template.
+
+```js
+  return (
+    <div>
+      <h1>My Hacker Stories</h1>
+
+      <InputWithLabel
+        id="search"
+        value={searchTerm}
+        isFocused
+        onInputChange={handleSearchInput}
+      >
+        <strong>Search:</strong>
+      </InputWithLabel>
+
+      <button
+        type="button"
+        disabled={!searchTerm}
+        onClick={handleSearchSubmit}
+      >
+        Submit
+      </button>
+
+      <hr />
+
+      {stories.isError && <p>Something went wrong ...</p>}
+
+      {stories.isLoading ? (
+        <p>Loading ...</p>
+      ) : (
+        <List list={stories.data} onRemoveItem={handleRemoveStory} />
+      )}
+    </div>
+  );
+};
+```
+
+If you're familiar with JSX this should be pretty straightforward. Near the top, we invoke the `InputWithLabel` component with some arguments and children (a block, for Ember users). We then add the submit button, which disables itself if we don't have a search term. A few notable things to call out here:
+
+1. Template interpolations are done with single curlies: `{searchTerm}`
+2. When passing a prop to a component, it looks like `prop={value}`, which is syntactically the same as attributes.
+3. Because we're using hooks and functional components, all of the values are in scope as is. We don't need to reference `this` to access them.
+4. React automatically adds an event listener based on the `onClick` prop when passed to an element instead of a component. This is the conventional way to add simple event listeners in React.
+
+Next, we have some template logic based on the state of `stories`. We have two sections of template that are dynamic here:
+
+1. In the first, we do a check to see if `stories.isError` is truthy, and if so we render a generic error message.
+2. Next, we use a ternary expression to branch. If `stories.isLoading` is truthy, we should a loading message, otherwise we invoke the `List` component to render the currently loaded stories.
+
+Next up, let's take a look at that `InputWithLabel` component.
+
+```js
+const InputWithLabel = ({
+  id,
+  value,
+  type = 'text',
+  onInputChange,
+  isFocused,
+  children,
+}) => {
+  const inputRef = React.useRef();
+
+  React.useEffect(() => {
+    if (isFocused) {
+      inputRef.current.focus();
+    }
+  }, [isFocused]);
+
+  return (
+    <>
+      <label htmlFor={id}>{children}</label>
+      &nbsp;
+      <input
+        ref={inputRef}
+        id={id}
+        type={type}
+        value={value}
+        onChange={onInputChange}
+      />
+    </>
+  );
+};
+```
+
+This component is interesting, because it's the first time we get to see React's ref system in action. We create the `inputRef` in the beginning of the component, and schedule an effect to occur later on with `useEffect`. This effect is memoized based on the value of `isFocused`, which is an argument we can pass to the component. If `isFocused` is true, it will focus the current value of the ref.
+
+We then pass the ref to the `<input>` below with `ref={inputRef}`. This sets the current value of `inputRef` to the input element, which allows the effect we scheduled earlier to access it and focus the element.
+
+Another couple of things to note here:
+
+- The `type` argument here is set to a default value of `"text"` using standard JS default syntax.
+- The `{children}` argument and interpolation is how React specifies where its children (the block of HTML passed to it) go. For Ember users, this is analagous to `{{yield}}` or to slots for users of other frameworks.
+
+Finally, lets take a look at the last couple of components, `List` and `Item`.
+
+```js
+const List = ({ list, onRemoveItem }) =>
+  list.map(item => (
+    <Item
+      key={item.objectID}
+      item={item}
+      onRemoveItem={onRemoveItem}
+    />
+  ));
+
+const Item = ({ item, onRemoveItem }) => (
+  <div>
+    <span>
+      <a href={item.url}>{item.title}</a>
+    </span>
+    <span>{item.author}</span>
+    <span>{item.num_comments}</span>
+    <span>{item.points}</span>
+    <span>
+      <button type="button" onClick={() => onRemoveItem(item)}>
+        Dismiss
+      </button>
+    </span>
+  </div>
+);
+```
+
+These are pretty straightforward overall. The interesting things to note here are:
+
+- These are pure functional components, without any hooks at all. They don't have any local state or effects to worry about, they're effectively a mapping from props to DOM. This makes them very easy to reason about, as we don't have to worry about any state changes over time.
+- The list of item components is created by `map`ping over the `list` argument, which is the list of results, rather than by any built in looping construct or using a standard JS loop. This is standard in React, but generally not how you would do it in a template based/non-JSX equivalent.
+- The `onClick` handler set on the `Dismiss` button is passed a closure which calls the `onRemoveItem` prop with the `item` in question. This is how we pass parameters up to event handlers in general, which is good to know.
+
+Alright, so that's the entire React example! Next up, lets step through Ember.
+
+## Ember
+
+The first thing that is a clear difference with the Ember Octane version is that it's split across multiple files. Ember uses conventions in the file system to define different types of constructs, such as components, helpers, and routes. In Ember Octane, we introduced component/template colocation, so now component templates live side-by-side with their JavaScript (if it exists).
+
+We'll start digging in with the entry point for the Ember implementation, which is the `SearchForm` component. Technically, the entry point to an Ember application is the `application.hbs` file, via the routing structure, but for small apps like this where we don't need routing we can simply invoke a component at the top level:
+
+```handlebars
+<!-- /app/templates/application.hbs -->
+<SearchForm/>
+```
+
+So, let's step through this component just like we did with the React version, starting first with the JavaScript:
+
+```js
+// /app/components/search-form.js
+import Component from '@glimmer/component';
+import axios from 'axios';
+import { tracked } from '@glimmer/tracking';
+import { action } from '@ember/object';
+
+const API_ENDPOINT = 'https://hn.algolia.com/api/v1/search?query=';
+
+export default class SearchForm extends Component {
+```
+
+The Ember implementation begins by defining a backing class for the component. Ember uses native JavaScript classes for components that contain state or other complex functionality. For components that are more pure or stateless, there is a classless alternative, which we'll see in a moment. But first, let's see how Ember defines state:
+
+```js
+  @tracked searchTerm = localStorage.getItem('searchTerm') ?? 'Ember.js';
+
+  @tracked stories = {
+    data: [],
+    isLoading: false,
+    isError: false,
+  };
+```
+
+Here we define two mutable properties - the `searchTerm` property, and the `stories` property. Ember defines mutable properties using the `@tracked` decorator. MobX and Vue users will likely understand how this works pretty intuitively: Any properties that are tracked can be updated later on, and these updates will trigger subsequent updates to any derived values that depend on them. Templates, computed properties, method calls, etc. will be dirtied and updated if they ever _used_ this state.
+
+We'll see how they are updated later on, but first let's see what some of that derived state looks like.
+
+```js
+  get url() {
+    return `${API_ENDPOINT}${this.searchTerm}`;
+  }
+```
+
+Here we have the `url` property, which is implemented as a standard JavaScript getter. Unlike in the React implementation, we don't create a new piece of state for the `url`. This is because we don't need to worry about sending a fetch request every time `searchTerm` is updated since the logic here is structured a bit differently in Ember, as we'll see in a moment.
+
+An important detail here is that this getter doesn't need any decoration to let Ember know what it is. From Ember's perspective, it's just accessing a property which happens to use a tracked value. That value will become entangled indirectly wherever `url` is used. This entanglement can reach through many layers (e.g. the getter could use another getter, or a method), and it would still work.
+
+Next up, the `constructor`:
+
+```js
+  constructor(...args) {
+    super(...args);
+
+    this.fetchStories();
+  }
+```
+
+Here we run some initial setup logic the first time the component loads to fetch the initial stories. Unlike functional components in React, Ember components create and reuse an instance for as long as the component exists, so we don't need to worry about this code running again, and we don't need to schedule logic with something like `useEffect` and memoization to load the stories.
+
+The `constructor` is one of only two lifecycle hooks Ember components have, however, the other one being for teardown (`willDestroy`). So, we have to do something different for updates. That brings us to our next concept: Actions.
+
+```js
+  @action
+  handleSearchInput(event) {
+    let { value } = event.target;
+
+    this.searchTerm = value;
+    localStorage.set('searchTerm', value);
+  }
+
+  @action
+  handleRemoveStory({ objectID }) {
+    this.stories = {
+      ...this.stories,
+      data: this.stories.data.filter(
+        story => objectID !== story.objectID
+      ),
+    }
+  }
+
+  @action
+  async fetchStories() {
+    this.stories = {
+      ...this.stories,
+      isLoading: true,
+      isError: false,
+    };
+
+    try {
+      let result = await axios.get(this.url);
+
+      this.stories = {
+        ...this.stories,
+        data: result.data.hits,
+        isLoading: false,
+        isError: false,
+      };
+    } catch {
+      this.stories = {
+        ...this.stories,
+        isLoading: false,
+        isError: true,
+      };
+    }
+  }
+}
+```
+
+Actions are how Ember applications update state and respond to user input. They're a conventional way of creating _bound functions_, so effectively the same as callbacks in React. Our stories component has three actions:
+
+1. `handleSearchInput`, which updates the `searchTerm` tracked property, and also updates its value in LocalStorage.
+2. `handleRemoveStory`, which removes a story from the current `stories` object by cloning it, and filtering the `data` property.
+3. `fetchStories`, which loads the stories and updates the state of `stories`.
+
+Since we don't generally have lifecycle hooks in Ember components, state changes have to happen through actions. So fetching updated stories happens directly as a result of a user action, rather than indirectly because the `url` value changed. This is why we didn't need to create a separate piece of state for `url` earlier. This also means that we use an action to update `localStorage` rather than using something like an effect, so the update is direct instead of indirect here.
+
+Beyond this, Ember doesn't have a very strong opinion about how you update this state currently. There's no equivalent to React's built-in `useReducer`, so we update `stories` where we need to directly, rather than via dispatching events. We could definitely add a state library like Redux to this implementation, but as I mentioned earlier I wanted to compare as closely as possible without introduce major external libraries, so that we get as close to 1-to-1 with the _default_ user experience as possible.
+
+Now, let's take a look at the template:
+
+```handlebars
+<!-- /app/components/search-form.hbs -->
+<div>
+  <h1>My Hacker Stories</h1>
+
+  <InputWithLabel
+    @id="search"
+    @value={{this.searchTerm}}
+    @isFocused={{true}}
+    @onInputChange={{this.handleSearchInput}}
+  >
+    <strong>Search:</strong>
+  </InputWithLabel>
+```
+
+The beginning of the template looks pretty similar, with us invoking the `InputWithLabel` component in pretty much the same way. However, there are some key differences:
+
+1. Template interpolations are done with _double_ curlies: `{{this.searchTerm}}`
+
+2. Ember distinguishes _arguments_ from _attributes_ with the `@` sigil in templates. Arguments are like props in React, they get passed to the component and the user controls what they do and where they go. Attributes, on the other hand, get applied directly to one-or-more of the underlying elements inside the component. This means we don't need to pass down the `type` prop explicitly for instance, like we did in the React version. We can remove the `@`, and it will be passed and applied to the underlying `input` correctly: `<InputWithLabel type="number">`.
+
+   Note that this is different from React's ability to spread props down to underlying components and elements, since React will spread _all_ props downward. Attribute syntax in Ember, by contrast, only spreads attributes - arguments will not be applied to the place where the `...attributes` keyword is used.
+
+3. Values are not automatically in scope for the template, so we need to reference `this` to access them.
+
+Next up we have the submit button:
+
+```handlebars
+  <button
+    type="button"
+    disabled={{not this.searchTerm}}
+    {{on "click" this.fetchStories}}
+  >
+    Submit
+  </button>
+```
+
+Here we can see that `button` is treated like a standard HTML element, with standard attribute syntax - no `@` sigil here. We have the `{{not this.searchTerm}}` binding, which disables the button if there is no search term currently. We also have a new syntax: `{{on "click" this.fetchStories}}`.
+
+This is a _modifier_, which is how Ember abstracts imperative side effects on HTML. In this case, `{{on}}` is a built-in modifier which adds an event listener to the element. It receives the name of the event listener (`"click"`) and the callback function to add (the `this.fetchStories` action) as arguments, and it handles the details of how to add, update, and remove this listener.
+
+Finishing up this template:
+
+```handlebars
+  <hr />
+
+  {{#if this.stories.isError}}
+    <p>Something went wrong ...</p>
+  {{/if}}
+
+  {{#if this.stories.isLoading}}
+    <p>Loading ...</p>
+  {{else}}
+    <List @list={{this.stories.data}} @onRemoveItem={{this.handleRemoveStory}} />
+  {{/if}}
+</div>
+```
+
+This portion is fairly similar, with the main difference being the usage of the `{{if}}` keyword in Ember's template language instead of JavaScript boolean logic and expressions.
+
+Next up, the `InputWithLabel` component:
+
+```handlebars
+<!-- /app/components/input-with-label.hbs -->
+<label {{set-focus @isFocused}} for={{@id}}>{{yield}}</label>
+&nbsp;
+<input
+  id={{@id}}
+  value={{@value}}
+
+  type="text"
+  ...attributes
+
+  {{on "change" @onInputChange}}
+/>
+```
+
+Here we can see in a few things in action. First, this is a template-only component - there is no backing JavaScript class. Template-only components are stateless, and effectively are pure functions of their inputs - arguments.
+
+You can't even reference `this` in a template-only component, it's `null`. Ember instead has a special syntax for referring directly to the arguments passed to a component, using the `@` sigil. This mirrors the way the argument is passed _in_ to the component.
+
+Next, we can see a new modifier, the `{{set-focus}}` modifier. This is a custom modifier that sets the focus to the element its applied to if the argument passed to it is truthy. Let's take a look at the implementation:
+
+```js
+// /app/modifiers/set-focus.js
+import { modifier } from 'ember-modifier';
+
+export default modifier((element, [isFocused]) => {
+  if (isFocused) {
+    element.focus();
+  }
+});
+```
+
+The modifier receives the element as was applied to as the first parameter, and an array of arguments as its second. We check the `isFocused` argument to see if its truthy, and if so, we focus the element.
+
+The other two things to note in the `InputWithLabel` component are:
+
+1. The `{{yield}}` keyword. This is how Ember specifies where child elements should go in a component.
+
+2. The `...attributes` syntax used on the `input` element. This is how Ember components specify which element to apply attributes on (remember from earlier, attributes are specified _without_ the `@` sigil, separate from arguments). Placing `...attributes` after `type="text"` allows users to override the text parameter, while still providing a default value.
+
+Finally, we have the last two components, `List` and `Item`
+
+```handlebars
+<!-- /app/components/list.hbs -->
+{{#each @list as |item|}}
+  <Item @item={{item}} @onRemoveItem={{@onRemoveItem}} />
+{{/each}}
+```
+```handlebars
+<!-- /app/components/item.hbs -->
+<div>
+  <span>
+    <a href={{@item.url}}>{{@item.title}}</a>
+  </span>
+  <span>{{@item.author}}</span>
+  <span>{{@item.num_comments}}</span>
+  <span>{{@item.points}}</span>
+  <span>
+    <button type="button" {{on "click" (fn @onRemoveItem @item)}}>
+      Dismiss
+    </button>
+  </span>
+</div>
+```
+
+Like the `InputWithLabel` component, these are template-only components, which are pure functions of their arguments. The `List` component uses Ember's `{{each}}` syntax to loop over the list of items, which invokes an `Item` component for each item.
+
+The most interesting thing to note here is the `fn` helper. This helper is used for currying, so we can pass arguments to callbacks in our templates. Here we pass the `@item` to the `@onRemoveItem` callback, so that it's called for the correct item.
+
+## Takeaways
+
+Alright, that about does it for the breakdown portion of this post. Now I'm going to share my own personal takeaways from this comparison. This next section is all personal opinion and commentary, and I realize that I'm not as familiar with hooks and don't have much experience with them. As a core team member of a different framework, I have read up on them and experimented to understand how they work (always good to see what we can learn from each other!), but that's not the same as working with them every day developing an application. So, a lot of my own experience and feelings here could absolutely be coming from that lack of familiarity.
+
+### Hooks have great composability
+
+One of the things that has stuck out to me since hooks were first introduced was their composability. The fact that hooks can be used to combine code arbitrarily sort of brings the same composability that _components_ and _templates_ have, to JavaScript code.
+
+Working through this example, it was cool to see the different ways that you could combine hooks together to derive state and trigger effects based on changes to state. The end result allows us to create very _declarative_ code. In particular, the declarative nature of the data fetching, where it responded to changes to the `url` state rather than being triggered by user interaction, is a good example of this.
+
+Fetching data based on an action or event is more straightforward, but it is a bit limiting overall. It can bloat your event handlers, and if you're not structured with your data flow it can quickly become spaghetti. Adding a data layer like Ember Data or Redux can help here, but there are still times when it makes more sense to fetch and manage data declaratively.
+
+This is what we've been working on in Ember with the proposal for the [`@use` decorator](https://github.com/emberjs/rfcs/pull/567), which was definitely inspired in part by the composability of hooks. Being able to create self-contained, self-managed, composable pieces of functionality that can be reused is something that at the moment feels like a noticeable gap. Our take on it is a bit different, but the end goal is very similar.
+
+### Hooks feel overly granular
+
+For the things that are great about hooks, I also have to say that they feel very complicated. I spent a lot of time thinking through how different code was going to run, when it was going to run, and how it could potentially interact with other hooks and code around it.
+
+A good example of this is the way that focus is set on an input. This is a fairly simple interaction, and modifiers in Ember make it very straightforward - you apply a function to the element, declaratively. By contrast, hooks force us to create a separate ref, set that ref, and then run an effect to actually set the focus. It all makes sense in the end, and it's also declarative, but it's a bit harder to follow the intent all the way through.
+
+I've heard from the React community before that built-in hooks really are meant to be a primitive, and higher level abstractions should be built on top of them. Coming away from this, I really feel like that is true, and if I were to start using this pattern I would definitely try to stick to libraries and higher level hooks as often as possible.
+
+I also worry about the kind of complexity that can emerge when you begin combining many different types of hooks in many different ways, both low and high level. Part of me feels like it would work, but there's this nagging doubt that there will be a lot of edge and corner cases that could get really tricky. I think this may in part be due to my lack of familiarity with them, but I would be nervous about shipping an API similar to hooks without really digging in and building something large with them first, myself.
+
+### Autotracking is pretty great
+
+One of the things that stuck out to me as the _most_ complicated part of hooks was the memoization. Thinking through what dependencies were needed for a particular piece of state, or a particular effect, was really really tricky. I think the one that really got me was the `useCallback` usage, which created a stable callback that was _then_ used as a dependency of an effect. As I mentioned above, this particular use case could have been simplified, but I can imagine that some hooks would end up using this technique in practice.
+
+I think the fact that React reruns the entire component every time here really increases the complexity too. It does ensure that the developer writes the correct dependencies, but it also makes you think about all the different possible starting states and interactions of these hooks all the time.
+
+By contrast, letting Ember's autotracking handle the decisions about when to rerun a particular piece of code felt much less complicated. If something changes, then all related state and code will rerun. Everything else will necessarily be static, so we don't need to worry about it. The guarantees given by autotracking here really allowed me to focus on the intent of the code rather than the exact flow it would be taking. In a lot of ways it feels _similar_ to the guarantees that [Rust's](https://www.rust-lang.org/) borrowing system gives the developer.
+
+It's worth noting that complexity can occur if you end up trying to do stateful things via autotracking (like, for instance, side-effecting during render). But like hooks, Ember has taken steps to prevent that, like removing lifecycle hooks (where imperative/effect-ful code tends to conglomerate) and asserting when state is mutated after it has been used.
+
+### @arguments make templates very easy to read
+
+Both templating systems were pretty similar in the end, with pros and cons. I liked the flexibility of JSX, and the ability to use plain JS expressions in some places, particularly with boolean logic. In others, I preferred the more first class template constructs in Ember templates, particularly for loops with `{{each}}`. I don't think these differences in general would tip me one way or the other though.
+
+The thing that _did_ stand out was how separating arguments/props from attributes really helped to clarify intent, and tell what a template was doing at a glance. In the React templates, I had to search a bit to figure out which things were components, and which were elements. Everything had the same general look, so I really had to hunt for the capital letters at the beginning of a `<Tag>`. With Ember, it was pretty clear immediately which things were components and which were just standard HTML, without having to look at it in detail.
+
+### State-less components are really good
+
+In both frameworks, the easiest to reason about components were the state-less ones. This has always been true, but what's really cool to see is how hooks in React and modifiers in Ember are allowing more and more components to _become_ stateless. In previous versions of both Ember and React, `InputWithLabel` would have been focused using a lifecycle hook on first render. That lone piece of functionality would have _required_ a backing class, and all the weight that comes with it.
+
+With hooks on the React side and modifiers on the Ember side, that's not needed anymore, and it really helps. I think this is something we should be exploring more, and between `@use` and [template imports](https://github.com/emberjs/rfcs/pull/454) coming up, I'm really excited to see what template-only components can do in the future of Ember 😁
+
+## What's next?
+
+If all you care about is the state of the art, then you may want to skip this section. Here I'm going to show where I think Ember will be in ~1 year or so, after we've incorporated some of the learnings from hooks and other changes that are in the pipeline.
+
+The main framework features that I think would help to clean up this example even more are:
+
+1. [Helper Managers](https://github.com/emberjs/rfcs/pull/625) and [JavaScript helper invocation](https://github.com/emberjs/rfcs/pull/626). Between these two features, it'll be possible to create a higher level API that enables more composable patterns, like the one proposed in the [`@use` decorator RFC](https://github.com/emberjs/rfcs/pull/567). This will unlock a lot of the pull-based flows that are similar to what hooks allow in React today.
+
+2. [Template Strict Mode](https://github.com/emberjs/rfcs/blob/master/text/0496-handlebars-strict-mode.md), which will enable template imports, making it much clearer where values are coming from.
+
+3. Allowing plain functions to work as modifiers and helpers in Ember templates. This is something we've been discussing for some time now, and especially with imports, it's beginning to feel more like the right move.
+
+4. Including something like [tracked-built-ins](https://github.com/pzuraq/tracked-built-ins) in the core of the framework. This would give us some more basic building blocks for creating and manipulating autotracked state.
+
+In addition, I think that the way we handle `localStorage` in this example is not ideal. Local storage is a form of root state, and a form of _global_ root state. It should update _everywhere_ it is used, whenever it updates. If we use the `searchTerm` key from local storage in two places, an update anywhere should affect both. The React example also falls short here (though I'm sure there's a solid hook in the ecosystem that doesn't have this issue). I would make a tracked wrapper around `localStorage`, so that it integrated seamlessly into Ember's autotracking, and all references would be updated correctly.
+
+All of these features will be available in the coming year or so, and then the Ember addon ecosystem will begin to experiment with them. It will take a while to figure out what the final high level APIs will be, but here's one possible future version of what Ember could look like once we do:
+
+```js
+import Component, { glm, tracked, action } from '@glimmer/component';
+import { inject as service } from '@ember/service';
+import { use, resource } from '@ember/resource';
+
+const API_ENDPOINT = 'https://hn.algolia.com/api/v1/search?query=';
+
+class FetchTask {
+  @tracked isLoading = true;
+  @tracked isError = false;
+  @tracked result = null;
+
+  constructor(url, format) {
+    this.run(url, format);
+  }
+
+  async run(url, format) {
+    try {
+      let response = await fetch(url);
+      let data = await response.json();
+
+      this.data = format ? format(data) : data;
+    } catch {
+      this.isError = true;
+    } finally {
+      this.isLoading = false;
+    }
+  }
+}
+
+const remoteData = resource(class {
+  get state(url, format) {
+    return new FetchTask(url, format);
+  }
+});
+
+export default class SearchForm extends Component {
+  @service localStorage;
+
+  @tracked url = `${API_ENDPOINT}${this.localStorage.searchTerm}`;
+
+  @use stories = remoteData(this.url, (result) => result.hits);
+
+  @action
+  handleSearchInput(event) {
+    this.localStorage.searchTerm = event.target.value;
+  }
+
+  @action
+  handleRemoveStory({ objectID }) {
+    this.stories.data = this.stories.data.filter(
+      story => objectID !== story.objectID
+    );
+  }
+
+  @action
+  handleSearchSubmit() {
+    this.url = `${API_ENDPOINT}${this.localStorage.searchTerm}`;
+  }
+
+  static template = glm`
+    <div>
+      <h1>My Hacker Stories</h1>
+
+      <InputWithLabel
+        @id="search"
+        @isFocused={{true}}
+
+        value={{this.localStorage.searchTerm}}
+        @onInputChange={{this.handleSearchInput}}
+      >
+        <strong>Search:</strong>
+      </InputWithLabel>
+
+      <button
+        type="button"
+        disabled={{not this.searchTerm}}
+        {{on "click" this.fetchStories}}
+      >
+        Submit
+      </button>
+
+      <hr />
+
+      {{#if this.stories.isLoading}}
+        <p>Loading ...</p>
+      {{else if this.stories.isError}}
+        <p>Something went wrong ...</p>
+      {{else}}
+        <List @list={{this.stories.data}} @onRemoveItem={{this.handleRemoveStory}} />
+      {{/if}}
+    </div>
+  `;
+}
+
+function setFocus(element, isFocused) {
+  if (isFocused) {
+    element.focus();
+  }
+}
+
+const InputWithLabel = glm`
+  <label {{setFocus @isFocused}} htmlFor={{@id}}>{{yield}}</label>
+  &nbsp;
+  <input id={{@id}} ...attributes {{on "change" @onInputChange}} />
+`;
+
+const List = glm`
+  {{#each @list as |item|}}
+    <Item @item={{item}} @onRemoveItem={{@onRemoveItem}} />
+  {{/each}}
+`;
+
+const Item = glm`
+  <div>
+    <span>
+      <a href={{@item.url}}>{{@item.title}}</a>
+    </span>
+    <span>{{@item.author}}</span>
+    <span>{{@item.num_comments}}</span>
+    <span>{{@item.points}}</span>
+    <span>
+      <button type="button" {{on "click" (fn @onRemoveItem @item)}}>
+        Dismiss
+      </button>
+    </span>
+  </div>
+`;
+```
+
+The main differences here are:
+
+1. All the state management for fetching and loading data is now contained with the `remoteData` resource. Resources allow users to abstract out common, self-contained patterns like this, in a way that is similar at a high level to hooks, but slightly less granular. This really helps to clean up the data story in general here.
+
+2. Using template imports allows us to define everything in a single file. This really feels much more flexible, and I really like how it means we can define modifiers in the same file as the component they are used in. This means related code can be kept together easily.
+
+3. The `setFocus` modifier is a plain function that doesn't need to be wrapped at all, and receives arguments normally, not in an array. This feels much more natural for the simple cases, and we can always define a class modifier for something more complex where we need more control.
+
+4. The `localStorage` service here really clarifies that we're accessing a piece of global state, and in a way that is autotracked and will update correctly accordingly. This is much nicer than worrying about the details every time we need to use local storage.
+
+Overall, I really like how this cleans up the current example even more and makes everything feel more composable and declarative. I'm excited to see the primitives land in the coming months, and to begin experimenting with these types of APIs!
+
+## Conclusion
+
+Overall, I want to say that I think that both frameworks handle the problem of rendering DOM and responding to user input pretty well, and have their advantages. In the end we're all writing JavaScript, solving very similar problems 😄 I may be an Ember Core team member, but we've learned a lot from React over the years, and I know they've learned a thing or two from us as well.
+
+In writing this post, I feel like I got to experience React with hooks much more deeply than the research I've done before, and I enjoyed learning them and working with them. It is an interesting programming model, and while I'm not entirely sold yet (I think I'd still prefer something more akin to [Elm](https://elm-lang.org/) personally) I can definitely see why people like them, and what the advantanges are.
+
+I'm also really proud to see how far Ember has come in the last couple years. Ember Octane is night-and-day compared to Ember Classic, and frankly, I think if we compared Ember Classic to modern React, it really wouldn't measure up. It was a lot of hard work, but I think overall things have turned out really well.
+
+If you're trying to choose a framework, or are just curious about what the differences are between the two, I hope this post helped you out!

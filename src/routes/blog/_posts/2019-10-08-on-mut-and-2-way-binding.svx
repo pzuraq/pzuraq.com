@@ -1,0 +1,33 @@
+---
+title: "On {{mut}} and 2-Way-Binding"
+tagline: ""
+---
+
+I've been quiet on my blog for a while now, mostly because we've been heads down working on getting Octane out the door, and I made a promise to myself not to get overloaded and to wait until everything was shipped 🚢 before I started up again! However, there is a lot of work we have planned for post-Octane, some of which has been discussed in the [2019-2020 Roadmap](https://github.com/emberjs/rfcs/pull/519).
+
+In particular, I've been focusing on the plan to slim Ember down by (slowly) deprecating and removing old code that is no longer necessary due to the Octane programming model. We have a rough idea of which features should be removed, in what order, and around which versions, but a lot of the details are still up in the air and most of the core team has been too busy to actually hammer out the details in full RFCs. Still, it's good to communicate often and early, which is why we decided to open up a [number](https://github.com/emberjs/rfcs/issues/533) [of](https://github.com/emberjs/rfcs/issues/537) [issues](https://github.com/emberjs/rfcs/issues/534) [on](https://github.com/emberjs/rfcs/issues/535) [the](https://github.com/emberjs/rfcs/issues/536) [RFC](https://github.com/emberjs/rfcs/issues/540) [repo](https://github.com/emberjs/rfcs/issues/541) both to signal the intent to deprecate, and as invitation for community members to help co-author these RFCs with me (if anyone is interested in taking one of these on, let me know!)
+
+I think most Ember users were pretty prepared for the majority of these deprecations - these are non-trivial features, like [Computed Properties](https://github.com/emberjs/rfcs/issues/536) and [`EmberObject`](https://github.com/emberjs/rfcs/issues/535), but we have been pretty loud and clear about most of them coming at some point, once the new programming model lands. The reaction to one of them, however, stood out: [The `mut` helper](https://github.com/emberjs/rfcs/issues/538).
+
+## What's wrong with `mut`?
+
+If you're not familiar with the `mut` helper, most users know it as a quick shorthand for creating an action that updates a value:
+
+```handlebars
+<input
+  value={{this.value}}
+  {{action (mut this.value) value="target.value"}}
+/>
+```
+
+On its surface, this seems completely fine, especially for Data Down, Actions Up style patterns. It would feel very unergonomic to have to create an action on the component class just to set a value, so having a shorthand for it makes a ton of sense.
+
+So, totally understandably, many members of the community were vocal about the idea of a deprecation:
+
+> I would prefer it if we offered a built-in ergonomic alternative before deprecating the existing solution.
+
+> The first I've heard that it was a "known antipattern", and "actively discouraged by core" was just a few months ago during a conversation about using the built in "input helpers". For a definite set time (at least from my understanding) the preferred default way to deal with form controls was to use mut.
+
+> And I only learned this week that its use is actively discouraged.
+
+It was pretty clear after a bit of discussion that I'd made some missteps in this pre-RFC. I even (embarrassingly) wrongly claimed that we had removed `mut` from the official guides, when that wasn't true at all:

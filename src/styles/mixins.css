@@ -1,0 +1,18 @@
+@define-mixin light {
+  .light,
+  .system {
+    @mixin-content;
+  }
+}
+
+@define-mixin dark {
+  .dark {
+    @mixin-content;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    .system {
+      @mixin-content;
+    }
+  }
+}

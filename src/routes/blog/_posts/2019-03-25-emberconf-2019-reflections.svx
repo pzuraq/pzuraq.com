@@ -1,0 +1,32 @@
+---
+title: "EmberConf 2019 Reflections"
+tagline: ""
+---
+
+Another year, another EmberConf! I always love coming up to Portland and visiting the community and my friends within it, it's a nice break after what is usually a hectic season at the start of the year. This year I decided to do a quick retrospective post, to get my thoughts and feels out there while they're still fresh.
+
+### Lots of New Faces
+
+The Ember community is fairly tight-knit, a lot of us know each other pretty well, or have at least seen each other around over the years. In fact, I definitely missed a few people who couldn't make it this year, or have moved on to other frameworks and communities. But there were a whole bunch of new attendees there this year as well!
+
+A lot of the newcomers had showed up in Discord or in other places online before the conference, but plenty hadn't. Overall it felt like the community had grown, and grown a bit more diverse at that! It always feels good to see new faces and people joining up, and I really hope their EmberConf was a good as my first one.
+
+It's also a reminder that we are always growing, and that we have to remember to make sure we don't get carried away and forget that there are always beginners and other folks trying to level-up, and we shouldn't accidentally leave them behind. This is going to be a major focus to me personally this quarter as I begin to focus on the upgrade story for Ember Octane, and making sure it's as straightforward and easy as possible. Speaking of Octane...
+
+### The Octane Excitement Was Real
+
+I had so many different conversations with so many different people who were incredibly enthusiastic about Octane! This is probably the most excited I've seen the community in years about new features, and it really felt validating for all the hard work we've been putting into them. There were a lot of hard decisions we had to make along the way, but it's all paying off now!
+
+Of course, we still have to polish up and ship the edition in the coming months, but all of the early feedback has been invaluable, and really at this point it's mostly about fixing bugs and patching up a few holes here and there. I think the move toward the Edition concept and terminology is really going over well, and I'm more eager than ever to get the final edition out there for Ember users to adopt in their apps!
+
+### A11y Was Front-And-Center
+
+It was really great to see such a large emphasis place on accessibility this year. From Melanie's [excellent day-one closer](https://www.youtube.com/watch?v=O3RKLHvpUAI&t=29591s), to the variety of conversations I had with folks who were clearly passionate about an accessible web, it was clear the community cares about this and wants to make it better. I think Ember is on track to be one of the better SPA frameworks out there for a11y, and our emphasis on conventions will really help us here in the long run.
+
+It was also very encouraging to see that this was a major concern in leadership as well! The core teams talked about this a lot at the all-hands face-to-face, and it was clear that they all cared a lot about it. We had some great ideas spark out of that conversation, and I'm excited to work on them - hopefully I'll have more to share on that in the near-future 😄
+
+### I Love This Community
+
+Really, my biggest take-away personally this year was how much I love being an Emberist. This community is full of amazing, wonderful, smart, caring, and thoughtful people, and I really enjoy being a part of it and coming back every year. There are tons of little details - the fact that we have child-care to make it as easy as possible for folks with families to come, the pronoun stickers, the swag-recycle drop, the no-photography lanyards, the MCs - that capture just how much time and effort goes into it every year. All of this is emblematic of the values of the Ember community, that we always try to outdo ourselves, always try to find a way to be _better_ than we were before.
+
+Coming back to Portland always feels like, in many ways, coming back home, because of that. I'm so glad I got to see everyone again this year, and if I missed you, I hope I'll see you next time! ❤️

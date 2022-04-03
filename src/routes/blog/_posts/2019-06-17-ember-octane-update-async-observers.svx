@@ -1,0 +1,101 @@
+---
+title: "Ember Octane Update: Async Observers"
+tagline: ""
+---
+
+Time for another Octane Update! In this post, we'll be talking about some changes that are coming to observers. Specifically, we've introduced a plan to make observers run *asynchronously*. This is both more inline with the internal architecture behind tracked properties, and will hopefully encourage better programming practices in the future.
+
+## Why Async?
+
+Making observers asynchronous may seem like a strange decision at first. After all, observers are functions that are triggered by property changes, so shouldn't they run immediately after the property changes?
+
+If we break down the various use cases for observers, we can see that there are two categories of use cases:
+
+1. Cases where observers *must* run immediately. These are cases where the code run by the observer will affect other synchronously run code - for instance, when we're using an observer to update another property:
+
+    ```js
+    const Person = EmberObject.extend({
+      firstName: null,
+    	givenName: null,
+
+    	syncNames: observer('firstName', function() {
+     	  this.set('givenName', this.firstName);
+      }),
+    });
+
+    let rob = Person.create();
+
+    // The `syncNames` observer _must_ run immediately
+    // in order for `givenName` to be updated when we
+    // go to access it down below.
+    rob.set('firstName', 'Rob');
+
+    rob.get('givenName'); // 'Rob'
+    ```
+
+1. Cases where observers' side-effects will be asynchronous anyways, and can be scheduled for later. For instance:
+    - Updating a value in a template
+    - Updating a helper
+    - Syncing values between two related data-models
+    - Syncing property changes back to a server
+
+Out of these two categories, asynchronous use cases tend to dominate, especially since we've pushed so hard as a community to model data flows using computed properties instead of observers. In fact, the example I give for why synchronous observers are necessary is itself a bit contrived - `givenName` could just be a standard computed `alias` instead.
+
+Synchronous observers also tend to be absolute *magnets* for spaghetti code. Observer code almost entirely consists of [spooky action at a distance](https://en.wikipedia.org/wiki/Action_at_a_distance_(computer_programming)), but at least the async use cases make some sense - they aren't about affecting any of the code that is *currently running*, they tend to be about alerting some other part of the system, or a completely different system (like the server) about a change in state. While there may be better ways to structure these updates, these are generally isolated and easy to understand.
+
+By contrast, synchronous observers by their very nature interact with the code they are observing. This means that to follow the flow of execution for any piece of code that contains updates to state, you also must be aware of all observers for that state, at all times. Observers that may be in a completely different file, in a different part of the application. That may trigger *other* observers, in other parts of the app.
+
+This starts to get messy very quickly, as you can imagine! This is a major part of the reason why Ember has moved away from observers as a whole, and while async observers don't completely obviate the problems, they do help to promote better practices in general, and prevent users from writing *completely* convoluted code.
+
+## Why Sync?
+
+Now you may be wondering, if all of that is true, then why do we need synchronous observers at all? It seems like they just promote bad practices, and their use cases are tenuous at best. Are they solely technical debt that could be refactored using computed properties and derived state?
+
+Unfortunately, there *were* cases where sync observers were required, and computed properties alone were not enough. Specifically, when a computed property's dependencies were too dynamic to express in the definition.
+
+For instance, consider the `sort` macro provided by Ember. In one of its usage modes, it receives the key on an array to sort, and a *sort definition*:
+
+```js
+const FriendList = Component.extend({
+  friends: [{ name: 'David' }, { name: 'Kelly' }],
+
+  friendSort: ['name:asc'],
+  sortedFriends: sort('friends', 'friendSort');
+});
+```
+
+The sort definition, `friendSort`, tells the sort macro to sort by the `name` property of each of the friends. But how does the `sortedFriends` property know to update whenever the name of a person changes? And what happens if we update `friendSort` to sort by a different property?
+
+The answer, up until recently, has been to use observers to watch for changes to these properties and manually invalidate the computed property. Most computeds are not this complicated, so this wasn't a major issue, but it's one of the reasons why observers have been kept around for so long.
+
+If only we had a way to automatically know which properties should invalidate our computeds 🤔
+
+## Look Ma, No Observers!
+
+You may have noticed I said that there *were* cases where observers were necessary. Technically there still are, but once we enable tracked properties, there no longer will be! Autotracking solves the same problem by attacking it from a different angle - rather than manually updating the properties we watch, we watch all values that we've interacted with.
+
+For instance, for the sort definition above, our `sortedFriends` property will:
+
+1. Get the `friends` array, which means we know to watch it for changes. If any items are added to the array, or removed from it, we know to update.
+2. Get the `friendsSort` array, which means we also know to watch the sort definition for any changes.
+3. Loop over the `friends` array to sort it, accessing the `name` property on every object in the array. Assuming the `name` property is tracked, or is accessed using `get` and updated using `set`, we now know to update if any of the names change.
+
+This means that no matter how we update the `friends` array or the objects in it, we'll know to update the `sortedFriends` array too - no observers necessary 😄
+
+## The Path Forward
+
+We started out attempting to make observers asynchronous entirely on Canary, but it turned out that there are too many apps that depend on synchronous observers, for better or worse. In addition, after we merged the change it was brought to our attention that the timing of observers *was* documented in some of the API docs (*not* the observer API docs though, which was how we missed them 🙃).
+
+Instead, our plan now is to introduce the ability for users to specify themselves whether or not an observer should be async. A [new RFC](https://github.com/emberjs/rfcs/pull/494) specifies the proposed APIs for this, along with an optional feature for setting the default. Future applications will have the optional feature on by default, so observers in new applications will be async by default.
+
+For existing applications, the path forward is:
+
+1. For the time being, refactor as many observers as possible to work as though they were async. In general, that means don't rely on the side-effects of observers in your own code - act as though they cannot affect anything, that they will run *eventually* but that you don't have any knowledge of *when* that will be.
+2. When async observers ship, either start marking observers as async one-by-one, or if all your observers work as async already then flip the optional feature flag.
+3. If you encounter an observer that *must* be sync, wait until autotracking is available, then refactor it to use autotracking instead.
+
+Hopefully, you either won't need to refactor much at all, or at the end of this process you'll have a better factored codebase overall!
+
+## Conclusion
+
+Making observers async has actually been a goal of the core team since before the v1.0 release, so it's good to see that we're finally getting around to it. This will help us clean up a lot of code internally in Ember (I'm excited to see what the impact will be in terms of code we can remove!), and in the long run I think will result in much better applications overall.

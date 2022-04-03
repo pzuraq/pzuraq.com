@@ -1,0 +1,202 @@
+@import './mixins.css';
+@import './syntax.css';
+@import './themes.css';
+@import './icons.css';
+@import './blog.css';
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer utilities {
+  .font-cursive {
+    font-family: 'Calistoga', cursive;
+    letter-spacing: 0.025rem;
+  }
+
+  .text-link {
+    @apply text-ochre-500 hover:text-ochre-300 underline underline-offset-4;
+  }
+}
+
+html {
+  font-family: 'Merriweather', serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  @apply font-cursive text-center;
+}
+
+h1 {
+  @apply text-4xl mb-4 pt-2;
+}
+
+h2 {
+  @apply text-3xl mb-4 pt-2;
+}
+
+h3 {
+  @apply text-2xl mb-3 pt-2;
+}
+
+h4 {
+  @apply text-xl mb-2 pt-2;
+}
+
+h5 {
+  @apply font-bold text-lg mb-2 pt-2;
+}
+
+h6 {
+  @apply font-bold text-base mb-2 pt-2;
+}
+
+p,
+ul {
+  @apply my-5;
+}
+
+blockquote {
+  @apply border-ochre-500 border-l-4 px-4 py-3 mx-4 my-8 bg-inverse-secondary;
+}
+
+blockquote p:first-child,
+aside p:first-child {
+  @apply mt-0;
+}
+
+blockquote p:last-child,
+aside p:last-child {
+  @apply mb-0;
+}
+
+aside {
+  @apply text-sm leading-6 px-4 py-3 mx-4 my-8 border-l-4 border-ochre-500 bg-inverse-secondary;
+}
+
+ul {
+  margin-left: 2rem;
+  margin-top: 1rem;
+  margin-bottom: 1rem;
+}
+
+li {
+  margin-bottom: 0.5rem;
+}
+
+ul > li {
+  position: relative;
+}
+
+ul > li:before {
+  background: theme('colors.ochre.500');
+  mask-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAcAAAAHCAYAAADEUlfTAAAACXBIWXMAAC4jAAAuIwF4pT92AAAAL0lEQVQImWNkYGD4z4AH4JL8z4RPF1zy////UOo/jM2ArpORkZERUyc2wIjHQQwA/kIOAUEdT7UAAAAASUVORK5CYII=');
+  mask-size: 100% 100%;
+
+  image-rendering: optimizeSpeed; /* STOP SMOOTHING, GIVE ME SPEED  */
+  image-rendering: -moz-crisp-edges; /* Firefox                        */
+  image-rendering: -o-crisp-edges; /* Opera                          */
+  image-rendering: -webkit-optimize-contrast; /* Chrome (and eventually Safari) */
+  image-rendering: pixelated; /* Chrome */
+  image-rendering: optimize-contrast; /* CSS3 Proposed                  */
+
+  content: '';
+  display: block;
+  position: absolute;
+  width: 9px;
+  height: 9px;
+  top: 0.45em;
+  left: -1em;
+  transform: rotate(45deg);
+}
+
+ul ul > li:before {
+  display: none;
+}
+
+ul ul {
+  list-style-type: square;
+}
+
+ul ul ul {
+  list-style-type: disc;
+}
+
+ol {
+  list-style-type: number;
+  margin-left: 2rem;
+  margin-top: 1rem;
+  margin-bottom: 1rem;
+}
+
+ol ol {
+  list-style-type: lower-roman;
+}
+
+ol ol ol {
+  list-style-type: upper-alpha;
+}
+
+li {
+  margin-right: 1rem;
+}
+
+li::marker {
+  @apply text-ochre-500;
+  margin-right: 0.5rem;
+}
+
+pre,
+code {
+  width: 100%;
+  overflow: scroll;
+}
+
+hr {
+  background-color: transparent;
+  border: 0;
+  border-top: 3px double theme('colors.ochre.500');
+  height: 3px;
+  margin: 2rem auto 2rem;
+  position: relative;
+  overflow: visible;
+}
+
+@screen md {
+  hr {
+    width: 40%;
+  }
+}
+
+.square,
+hr::before {
+  @apply bg-inverse;
+  background: var(--color-inverse);
+  transform: translate(-50%, -67%) rotate(45deg);
+  position: absolute;
+  content: '';
+  width: 9px;
+  height: 9px;
+  background-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAcAAAAHCAYAAADEUlfTAAAACXBIWXMAAC4jAAAuIwF4pT92AAAANUlEQVQImWP8sij2PwMOwAKlGbHI/WfCpYuBgYEBLskdu4iBgYHhPxKbAV0nivF4jWXE51oAaSYKByQ4Eh0AAAAASUVORK5CYII=');
+  background-size: 100% 100%;
+
+  image-rendering: optimizeSpeed; /* STOP SMOOTHING, GIVE ME SPEED  */
+  image-rendering: -moz-crisp-edges; /* Firefox                        */
+  image-rendering: -o-crisp-edges; /* Opera                          */
+  image-rendering: -webkit-optimize-contrast; /* Chrome (and eventually Safari) */
+  image-rendering: pixelated; /* Chrome */
+  image-rendering: optimize-contrast; /* CSS3 Proposed                  */
+}
+
+hr::before {
+  left: 50%;
+}

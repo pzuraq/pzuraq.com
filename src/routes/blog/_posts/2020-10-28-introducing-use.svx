@@ -1,0 +1,596 @@
+---
+title: 'Introducing @use'
+tagline: 'An atomic abstraction for application lifecycle'
+---
+
+At the end of last year, I submitted an RFC, written by Yehuda Katz and myself, that was attempting to plug some gaps we were seeing in Ember's programming model - the [`@use` and Resources RFC](https://github.com/emberjs/rfcs/pull/567). The main gaps we were seeing were with component lifecycle hooks, which had been removed in Ember Octane. Leading up to Octane, most of the use cases for lifecycle hooks that we found really fell into two categories - either it was _derived state_ and could be better modeled with getters and tracked properties, or it was _DOM modification_ and so could be handled by Ember's new modifier APIs. But it became apparent eventually that there were a number of other use cases that didn't really fit into these buckets really neatly. The end result was that folks were either using modifiers to modify things _other than_ the DOM, which felt like it was a mixing of concerns (and caused issues with, for instance SSR, where modifiers do not run at all), or that they were struggling to figure ways to turn these into "derived state". I saw quite a few call-a-function-from-a-getter type patterns around that time, and that felt all sorts of off to me.
+
+It may seem like that RFC didn't go anywhere (after all, I only just closed it), but what actually ended up happening was a flurry of discussions and debates, that lead to four _separate_ RFCs:
+
+1. [Destroyables](https://github.com/emberjs/rfcs/blob/master/text/0580-destroyables.md)
+2. [Autotracking Memoization](https://github.com/emberjs/rfcs/blob/master/text/0615-autotracking-memoization.md)
+3. [Helper Managers](https://github.com/emberjs/rfcs/blob/master/text/0625-helper-managers.md)
+4. [`invokeHelper`](https://github.com/emberjs/rfcs/blob/master/text/0626-invoke-helper.md)
+
+These RFCs broke down the functionality needed to build something like the proposed `@use` decorator entirely in userland. This way, we could iterate on and experiment with higher level APIs without locking ourselves into one from the get-go.
+
+We did this, in part, because this is the pattern that Ember has been following for some time now - first build the primitives, then build the higher level API. It ensures that we've really fully rationalized the system, that every core bit of functionality makes sense _on its own_, and composes nicely into intuitive higher level APIs.
+
+But we also did this because there was pushback against adding _another_ high-level concept to Ember. Octane was about simplifying Ember conceptually - we spent a lot of time honing down various APIs to just the bare essentials, so it felt wrong to add another concept so quickly afterwards. In addition, it felt like there was a lot of overlap between _Helpers_, _Modifiers_, and _Resources_, but they all seemed to be scenario solving a specific use case, rather than sharing a general underlying principle.
+
+So we took a step back, and really thought about what concepts a modern templating layer needed. We also looked around at the wider ecosystem - particularly at the recent direction React had taken with hooks, which seemed to be trying to solve a lot of the same problems. After a while exploring the design space, some concrete ideas started to form.
+
+[ember-could-get-used-to-this](https://github.com/pzuraq/ember-could-get-used-to-this) is an opinionated implementation of some of these ideas, using the primitive APIs we've shipped. The goal of the project is to implement them and actually test them out, so we can get real world feedback on these ideas and see what works and what doesn't - similar to the way Rob Jackson's [sparkles-component](https://github.com/rwjblue/sparkles-component) was a predecessor to the final Glimmer component design - and eventually upstream them to Ember itself as the new default experience in a future edition. The name itself is meant to be a bit comical, in the tradition of experimental Ember addons like sparkles-component.
+
+![I could get used to this.gif](https://media.giphy.com/media/Q5LcPLQxjB1ZOm7Ozs/giphy.gif)
+
+`ember-could-get-used-to-this` rethinks non-component template constructs in general, proposing the following top level concepts:
+
+1. **Functions**
+2. **Resources**
+3. **Modifiers**
+4. **Effects** (🚧 Currently under construction 🚧)
+
+I'm going to go through each of these concepts one by one and discuss exactly what they are meant for.
+
+## Functions
+
+In `ember-could-get-used-to-this`, you can use plain JavaScript functions in templates:
+
+```js
+// /app/helpers/add.js
+
+export default function add(a, b) {
+  return a + b;
+}
+```
+
+```handlebars
+{{! /app/components/my-component }}
+
+{{add @first @second}}
+```
+
+Functions are meant to replace simple Ember Helpers defined with the `helper()` function. Rather than creating a special conceptual wrapper around functions, we can just use them directly! This decreases the amount of boilerplate needed to use functions in templates, and increases the composability and share-ability with utility functions overall.
+
+In the near future, when we land template imports, it will also unlock another possibility: Defining functions _inline_ with components. Using a hypothetical template imports syntax, the above could be rewritten as:
+
+```js
+function add(a, b) {
+  return a + b;
+}
+
+<template>
+  {{add @first @second}}
+</template>
+```
+
+This is important, because it means that any component class which _only_ exists because of a couple of getters can instead be defined using functions with a template-only component. This component, for instance
+
+```js
+import Component from '@glimmer/component';
+import { formatPhone } from '../utils';
+
+export default class Profile extends Component {
+  get fullName() {
+    let { user } = this.args;
+    let middleInitial = user.middleName[0];
+
+    return `${user.firstName} ${middleInitial} ${user.lastName}`;
+  }
+
+  get formattedPhone() {
+    return formatPhone(this.args.user.phone);
+  }
+}
+```
+
+```handlebars
+<details class='profile'>
+  <div class='name'>
+    <span>Name:</span>
+    {{this.fullName}}
+  </div>
+  <div class='phone'>
+    <span>Phone:</span>
+    {{this.formattedPhone}}
+  </div>
+</details>
+```
+
+Could be rewritten to something like this:
+
+```js
+import { formatPhone } from '../utils';
+
+function fullName(user) {
+  let middleInitial = user.middleName[0];
+
+  return `${user.firstName} ${middleInitial} ${user.lastName}`;
+}
+
+<template>
+  <details class="profile">
+    <div class="name">
+      <span>Name:</span>
+      {{fullName @user}}
+	  </div>
+    <div class="phone">
+      <span>Phone:</span>
+      {{formatPhone @user.phone}}
+    </div>
+  </details>
+</template>
+```
+
+This is better in a few ways:
+
+- It's less boilerplate overall, we no longer need to write a getter to wrap the `formatPhone` function, and we don't need to setup the class for the component itself.
+- It means we don't have an unnecessary class that could over time become a state magnet, slowly accruing complexity as values are added to it.
+- It's more inline with Ember's HTML-first mentality, since it's driven by a template-only component rather than a class-based component.
+
+Many of the components I've written over the years consisted primarily of derived state - computed properties in classic Ember, getters in modern Ember. By promoting functions to be supported as first class values in templates, those can be converted to template-only components, and they will still be using plain vanilla JS.
+
+## Resources
+
+Resources are a new concept that `ember-could-get-used-to-this` introduces. They are most similar to class-based Ember helpers, but with a more targeted goal overall. Resources are meant to _bridge a gap_ between imperative programming and declarative programming.
+
+Ember templates are declarative. When we design a component, like the profile component from our previous example, we are specifying declaratively the HTML that should be rendered. If the data used in the templates ever updates, then Ember will update the rendered output as well, and we don't have to worry about the details. We don't have to tell Ember which specific steps to take, and when - it figures everything out for us.
+
+Sometimes, we need to use JavaScript to do a bit of processing on the data before it gets rendered, like the `fullName` or `formatPhone` functions. These functions may have imperative steps in them, but from the template's perspective, they are effectively black boxes whose inputs and outputs are fully declarative.
+
+There are some types of values, however, that are very difficult to express declaratively using just templates and functions or getters. A great example of this is loading data asynchronously. Let's say we wanted to load the user's profile data lazily, when we first render the profile component. The core issue is that this must be done in a couple of steps:
+
+1. Make the fetch request to load the data
+2. Handle the response
+3. Assign the result to a `@tracked` property
+
+Ember templates don't understand the idea of a Promise or async, so we need to handle these steps manually. We also need to store the result in a `@tracked` property somewhere in order to tell Ember that something has changed later on, so it knows to rerender.
+
+This was one of the use cases for lifecycle hooks in classic components. Lifecycle hooks were essentially an escape hatch that allowed you to handle these types of multi-step processes, and to manage them. In classic Ember, the lazy-profile component might have looked something like this:
+
+```js
+import Component from '@ember/component';
+import { formatPhone } from '../utils';
+
+export default class Profile extends Component {
+  isLoading = true;
+
+  constructor() {
+    super(...arguments);
+
+    fetch(`www.example.com/users/${this.userId}`)
+      .then((response) => response.json())
+      .then((user) => {
+        this.set('user', user);
+        this.set('isLoading', false);
+      });
+  }
+
+  get fullName() {
+    let { user } = this;
+    let middleInitial = user.middleName[0];
+
+    return `${user.firstName} ${middleInitial} ${user.lastName}`;
+  }
+
+  get formattedPhone() {
+    return formatPhone(this.user.phone);
+  }
+}
+```
+
+```handlebars
+{{#if this.isLoading}}
+  ...Loading
+{{else}}
+  <details class='profile'>
+    <div class='name'>
+      <span>Name:</span>
+      {{this.fullName}}
+    </div>
+    <div class='phone'>
+      <span>Phone:</span>
+      {{this.formattedPhone}}
+    </div>
+  </details>
+{{/if}}
+```
+
+This does the job, but has a number of issues that pop out:
+
+1. It doesn't cancel the request after the component is destroyed - what happens if we navigate away before the data finished loading?
+2. It doesn't handle the request failing, which should likely show the user that something went wrong.
+3. It doesn't update over time if the `userId` changes. The fetched user is still derived state - if we could query it locally without making a network request we could model it like any other function or getter - so it should be able to respond declaratively to changes in the underlying data. The fact that it does not breaks the declarative black box we discussed earlier.
+
+We could add all of this functionality to the component, using other lifecycle hooks like `didRender` and `willDestroy`, but it's a lot of code and if this were a common pattern it would quickly get burdensome. We could also abstract this code to an `<Async>` component, which yields the result back to us, but we encounter a problem:
+
+```handlebars
+<Async>
+  <:loading>
+    ...Loading
+  </:loading>
+  <:loaded as |user|>
+    <details class='profile'>
+      <div class='name'>
+        <span>Name:</span>
+        {{this.fullName}}
+      </div>
+      <div class='phone'>
+        <span>Phone:</span>
+        {{this.formattedPhone}}
+      </div>
+    </details>
+  </:loaded>
+</Async>
+```
+
+How do `this.fullName` and `this.formattedPhone` see the result of the `user`? We could convert this to use functions instead, like in the previous section, but stepping back, this really demonstrates a fundamental composability issue. Components cannot be used in JavaScript, so there is no way use the same logic for loading data in class based components as in templates, and we ultimately have to have separate abstractions depending on our use case.
+
+Resources, like functions and getters, are black boxes that receive declarative inputs and produce declarative outputs, while handling the details of any non-declarative operations internally. In a sense, they represent a sort of "reactive function" which can be used to bridge any gap where this type of async or lifecycle oriented action has to occur in the middle of your templates. They are also usable in both templates and JavaScript, making them a perfect place to abstract common functionality that may need to be shared and used in many places throughout your app.
+
+Let's see this in action. We could rewrite the profile component with resources like so:
+
+```js
+import Component from '@glimmer/component';
+import { tracked } from '@glimmer/tracking';
+import { Resource } from 'ember-could-get-used-to-this';
+import { formatPhone } from '../utils';
+
+class FetchData extends Resource {
+  @tracked data = null;
+  @tracked isLoading = true;
+  @tracked isError = false;
+
+  controller = new AbortController();
+
+  get value() {
+    return {
+      isLoading: this.isLoading,
+      isError: this.isError,
+      data: this.data,
+    };
+  }
+
+  async setup() {
+    let { signal } = this.controller;
+
+    try {
+      let response = await fetch(this.args.positional[0], { signal });
+      let data = await response.json();
+
+      this.isLoading = false;
+      this.data = data;
+    } catch (error) {
+      this.isLoading = false;
+      this.isError = true;
+      this.data = error;
+    }
+  }
+
+  teardown() {
+    this.controller.abort();
+  }
+}
+
+export default class Profile extends Component {
+  @use user = new FetchData(() => [`www.example.com/users/${this.args.userId}`]);
+
+  get fullName() {
+    let user = this.user.data;
+    let middleInitial = user.middleName[0];
+
+    return `${user.firstName} ${middleInitial} ${user.lastName}`;
+  }
+
+  get formattedPhone() {
+    return formatPhone(this.user.data.phone);
+  }
+}
+```
+
+```handlebars
+{{#if this.user.isLoading}}
+  ...Loading
+{{else if this.user.isError}}
+  Something went wrong!
+{{else}}
+  <details class='profile'>
+    <div class='name'>
+      <span>Name:</span>
+      {{this.fullName}}
+    </div>
+    <div class='phone'>
+      <span>Phone:</span>
+      {{this.formattedPhone}}
+    </div>
+  </details>
+{{/if}}
+```
+
+Breaking this example down, we define a resource class `FetchData`, which extends from `Resource`. It contains a few tracked properties representing its internal state:
+
+```js
+class FetchData extends Resource {
+  @tracked data = null;
+  @tracked isLoading = true;
+  @tracked isError = false;
+
+  controller = new AbortController();
+```
+
+Resources fundamentally provide a value, some sort of output that gets used elsewhere in the system. We expose this value via the `value` property, which can be a tracked property, or in this case a getter:
+
+```js
+  get value() {
+    return {
+      isLoading: this.isLoading,
+      isError: this.isError,
+      data: this.data,
+    };
+  }
+```
+
+This is the value that we access externally when we read the `user` property later on, and it is tracked, so Ember will watch it for updates whenever one of these properties change. We can use this value in our other derived state, such as getters and functions and even directly in templates, declaratively.
+
+Now we move on to the lifecycle portion of the resource, the `setup` and `teardown` methods:
+
+```js
+  async setup() {
+    let { signal } = this.controller;
+
+    try {
+      let response = await fetch(this.args.positional[0], { signal });
+      let data = await response.json();
+
+      this.isLoading = false;
+      this.data = data;
+    } catch (error) {
+      this.isLoading = false;
+      this.isError = true;
+      this.data = error;
+    }
+  }
+
+  teardown() {
+    this.controller.abort();
+  }
+```
+
+This is where we can put our non-declarative logic, such as starting the fetch request, handling it, and cancelling it. `setup` runs when the resource is first accessed, and `teardown` runs when the parent the resource is on is destroyed. These lifecycle hooks are also autotracked, so they'll _rerun_ whenever there are upstream changes, such as the positional argument passed in changing. By default, when something changes, the resources tears itself down and restarts, creating an entirely new instance that then calls `setup` again. So, in the case of our `FetchData` resource, if the URL we are fetching from ever changes we will destroy the resource, cancel the existing request, and create a new one for the new URL. Externally, this operation is entirely opaque - nothing else knows about it, they'll just see the `isLoading` property change back to `true` and react accordingly.
+
+::: aside
+Resources also allow us to implement an `update` hook. If this is implemented, then the resource is not torn down when changes occur, and the `update` hook is called instead. This allows users to manage the details of updates more directly, but also requires them to be more careful about how they do updates. When using the `update` hook its much easier to read state and then attempt to write to it, which is not allowed and will throw an error, for instance. This is why the default behavior is to create a new resource whenever a change occurs.
+:::
+
+Finally, we define the resource on our component with the `@use` decorator:
+
+```js
+  @use user = new FetchData(() => [
+    `www.example.com/users/${this.args.userId}`
+  ]);
+```
+
+When we create a new resource in JavaScript like this, we pass it a function that generates the arguments passed to it. This function is tracked, which is how the resource knows to update whenever the values change.
+
+::: aside
+The args generator can return an array of positional args, or it can return an object containing `positional` and `named` args together. This way it matches usages in templates.
+:::
+
+Overall the resource solution is a bit more verbose than the original one, but it solves all of the basic problems it had:
+
+1. The request is cancelled using an [AbortController](https://developer.mozilla.org/en-US/docs/Web/API/AbortController) when the resource is torn down, just before destruction. Resources are destroyed when the parent that they exist in is destroyed, so this handles the case when the we navigate away from the profile component before the request has finished.
+2. We handle error cases and expose the error via the `isError` property on the resource's value, which allows users to know that an error occurred and handle it accordingly.
+3. The resource will update whenever the url passed to it changes, meaning it works declaratively like any other part of the system. It's just a black box that we funnel state through.
+
+We can also use this resource directly in templates, without having to use the `@use` decorator at all. Going back to our first example, we could potentially rewrite the profile component to be a template-only component like so once we have template imports:
+
+```js
+import { Resource } from 'ember-could-get-used-to-this';
+import { formatPhone } from '../utils';
+
+class FetchData extends Resource {
+  @tracked data = null;
+  @tracked isLoading = true;
+  @tracked isError = false;
+
+  controller = new AbortController();
+
+  get value() {
+    return {
+      isLoading: this.isLoading,
+      isError: this.isError,
+      data: this.data,
+    };
+  }
+
+  async setup() {
+    let { signal } = this.controller;
+
+    try {
+      let [url] = this.args.positional;
+      let response = await fetch(url, { signal });
+      let data = await response.json();
+
+      this.isLoading = false;
+      this.data = data;
+    } catch (error) {
+      this.isLoading = false;
+      this.isError = true;
+      this.data = error;
+    }
+  }
+
+  teardown() {
+    this.controller.abort();
+  }
+}
+
+function fullName(user) {
+  let middleInitial = user.middleName[0];
+
+  return `${user.firstName} ${middleInitial} ${user.lastName}`;
+}
+
+<template>
+  {{#let (FetchData (concat "www.example.com/users/" @userId)) as |user|}}
+    {{#if user.isLoading}}
+      ...Loading
+    {{else if user.isError}}
+      Something went wrong!
+    {{else}}
+      <details class="profile">
+        <div class="name">
+          <span>Name:</span>
+          {{fullName user.data}}
+        </div>
+        <div class="phone">
+          <span>Phone:</span>
+          {{formatPhone user.data.phone}}
+        </div>
+      </details>
+    {{/if}}
+  {{/let}}
+</template>
+```
+
+And of course, the logic behind the FetchData resource is fully reusable, so it can now be used throughout our application. We no longer have to write annoying boilerplate based on lifecycle hooks whenever we want to fetch data!
+
+When using `ember-could-get-used-to-this` at the moment, resources will need to go into the `app/helpers` folder. This is something that will change in the near future with template imports, but for the time being everything is implemented using Ember's old helper system, so resources and template functions will need to share the same folder. If this I think the "pit of incoherence" raising its head again, though I believe pretty soon we'll be on our way back to full coherence with another edition!
+
+## Modifiers
+
+Next up, we have modifiers. Modifiers were a core part of Ember Octane, and as I mentioned in the beginning of this post, they were meant to handle DOM modifications that was previously done in lifecycle hooks. In `ember-could-get-used-to-this` they continue to fulfill this role, with an API that mirrors the Resource API.
+
+```js
+import { Modifier } from 'ember-could-get-used-to-this';
+
+export default class On extends Modifier {
+  event = null;
+  handler = null;
+
+  setup() {
+    let [event, handler] = this.args.positional;
+
+    this.event = event;
+    this.handler = handler;
+
+    this.element.addEventListener(event, handler);
+  }
+
+  teardown() {
+    let { event, handler } = this;
+
+    this.element.removeEventListener(event, handler);
+  }
+}
+```
+
+Like resources, modifiers have `setup` and `teardown` methods for managing their lifecycle, and they are autotracked. Whenever a tracked value that was used in `setup` changes, the modifier will be torn down and destroyed, and a new instance will be created. Also like resources, modifiers can also optionally implement the `update` method, and that method will be called instead of tearing down and creating a new modifier for each change, allowing them to have more fine-tuned control over updates.
+
+Modifiers can also be implemented as functions using the `modifier` wrapper:
+
+```js
+import { modifier } from 'ember-could-get-used-to-this';
+
+const on = modifier((element, [eventName, handler]) => {
+  element.addEventListener(eventName, handler);
+
+  return () => {
+    element.removeEventListener(eventName, handler);
+  };
+});
+
+export default on;
+```
+
+Functional modifiers run at the same time as the `setup` lifecycle hook in class modifiers, and are autotracked. They can return an teardown function, which will run whenever a change occurs or when the element is removed from the DOM.
+
+The `modifier` wrapper on functional modifiers serves a few purposes. It helps to distinguish modifiers from non-modifier functions, so that they are used in the correct positions - functional modifiers which are not used on elements will throw an error. It's also useful for linting purposes, as access to DOM APIs is legal inside of modifiers but not elsewhere.
+
+## Effects
+
+Finally we have effects. Effects don't exist yet in `ember-could-get-used-to-this`, because the underlying infrastructure for them hasn't been built yet (though I'm working on that! 👷). The feature is designed though, so I can describe how it will work when it is finished, and how it rounds of the new programming model.
+
+Resources fundamentally produce a value, and are lazy - they don't execute until they are used. That value flows through the rest of the system, until it is used ultimately somewhere in the template. Modifiers act directly _on_ the template - they take state flow, and push it directly into the DOM by modifying an element. These cover a large number of use cases, but there are a few remaining ones that they do not cover.
+
+These are cases where we want to pull a value out of the system, and use it externally, somewhere else. This could be because we need to interoperate with an external library or plugin for instance. Another very common reason is because we need to add an event listener to the document itself. This is something that we can use an effect for. Effects have essentially the same class-based API as modifiers and resources:
+
+```js
+import { Effect } from 'ember-could-get-used-to-this';
+
+export default class OnDocument extends Effect {
+  event = null;
+  handler = null;
+
+  setup() {
+    let [event, handler] = this.args.positional;
+
+    this.event = event;
+    this.handler = handler;
+
+    document.addEventListener(event, handler);
+  }
+
+  teardown() {
+    let { event, handler } = this;
+
+    document.removeEventListener(event, handler);
+  }
+}
+```
+
+This effect would then be usable directly in the template, in the same place as a helper:
+
+```js
+import Component from '@glimmer/component';
+import { tracked } from '@glimmer/tracking';
+
+export default class Modal extends Component {
+  @tracked isOpen = false;
+
+  open = () => {
+    this.isOpen = true;
+  };
+
+  close = () => {
+    this.isOpen = false;
+  };
+}
+```
+
+```handlebars
+<button {{on 'click' this.open}}>Show Modal</button>
+
+{{#if this.isOpen}}
+  {{on-document 'click' this.close}}
+
+  <dialog>
+    {{yield}}
+  </dialog>
+{{/if}}
+```
+
+When this modal component is open, its will trigger the effect, adding an event listener to the document. When the modal is closed, it will teardown this effect and remove the listener. We can now extend our declarative data flow outside of the system, to any other JavaScript API.
+
+Like modifiers, effects also have a functional API:
+
+```js
+import { effect } from 'ember-could-get-used-to-this';
+
+const onDocument = effect(([eventName, handler]) => {
+  document.addEventListener(eventName, handler);
+
+  return () => {
+    document.removeEventListener(eventName, handler);
+  };
+});
+```
+
+Unlike resources or functions, they do _not_ produce a value. They also run their effects after the rendering process is complete, so that they don't block rendering, and so they operate on the complete rendered output, similar to modifiers. Finally, effects _do_ run during SSR, unlike modifiers. Some effects may operate on the DOM, but others may not, especially ones which integrate with external libraries, so they do have that capability.
+
+## Conclusion
+
+I hope you give `ember-could-get-used-to-this` a shot! I'm really excited by these features and what they'll mean for the future of Ember. I believe that the problems that the library is trying to solve represent the largest gaps in Ember's declarative programming model that remain to date, and they really are problems that we've never have had great, generalized solutions for. Ember Concurrency did provide solutions to some extent for async tasks, but it still required being manually triggered via a lifecycle hook, so it was not direct derivation. It also was not a generalized primitive, focusing only on async tasks. I believe that resources would be a perfect primitive for rebuilding the next iteration of Ember Concurrency on top of, however, and am definitely interested to see where it goes in the future.
+
+If you have any feedback about these ideas or the library, feel free to open an issue for discussion or to reach out on the Ember Discord!

@@ -1,0 +1,167 @@
+---
+title: "Ember Octane Update: Landing Decorators"
+tagline: ""
+---
+
+Hello again, welcome to another Ember Octane update! I've been lagging behind on the posts recently, mostly because I've been incredibly busy planning a wedding 😄 The big event is this Saturday, and I'm going to be taking some _much_ needed vacation time over the next few weeks, so I'll be a bit quieter than usual. However, I wanted to give everyone one last update about a major feature that is _finally_ landing soon: Decorators!
+
+Decorators are currently enabled in beta, and slated to land in Ember 3.10.0 (barring any major issues that require us to turn the feature off, but it's looking good so far!) This is incredibly satisfying to see, it represents the culmination of several years of work and research, and a massive effort from many members in the community. Before we go on, I want to say thank you to everyone who helped with decorators over time, including:
+
+* **Yehuda Katz**, for working to actually get the feature into the language.
+* **Rob Jackson**, for setting up the first experimental library that eventually became the `ember-decorators` project.
+* **Jan Buschtöns**, for helping to maintain said project.
+* **Preston Sego**, for helping with writing the RFC and implementing the feature in Ember.
+* **The Typed Ember team**, for helping with TypeScript support and providing a ton of help, guidance, and real world testing for `ember-decorators`, including:
+	* Chris Krycho
+	* Dan Freeman
+	* James C. Davis
+	* and Mike North
+* **Sam Selikoff** and **Dan Freeman** (again) for all their help getting `ec-addon-docs` to a state where we could use it for `ember-decorators`.
+* **Cyril Fluck** for pushing me to start down this path in the first place.
+* And everyone else who helped with debugging, testing, feedback, and bug fixes throughout the years!
+
+In the rest of this post I'm going to give a brief overview of the new APIs and what is officially supported now. There are some differences between the official Ember APIs and what used to be available in `ember-decorators` as well, so I'll be going over those too. We'll go over:
+
+* The decorators provided by Ember officially
+* Decorators that were _not_ added to Ember
+* Support in addons, like Ember Data
+* The new Babel transforms, and stage 1 vs stage 2 decorators
+
+## The Official Decorators
+When decorators are officially released, the main change is that all `computed()`, `service()`, `controller()`, and all of the computed property macros will become native decorators _directly_. You will not need to import them from a separate file path. The following will Just Work™️:
+
+```js
+import { computed } from '@ember/object';
+import { readOnly } from '@ember/object/computed';
+import { inject as service } from '@ember/service';
+import Component from '@ember/component';
+
+// We can use all of these decorators in classic classes...
+const ClassicPersonComponent = Component.extend({
+  auth: service(),
+
+	fullName: computed('firstName', 'lastName', function() {
+    return `${this.firstName} ${this.lastName}`;
+  }),
+
+  isAuthenticated: readOnly('auth.isAuthenticated'),
+});
+
+// Or in native classes!
+class NativePersonComponent extends Component {
+  @service auth;
+
+  @computed('firstName', 'lastName')
+  get fullName() {
+    return `${this.firstName} ${this.lastName}`;
+  }
+
+  @readOnly('auth.isAuthenticated')
+  isAuthenticated;
+}
+```
+
+The above code works, and both classes are essentially the same. We accomplished this trick by aligning the way Ember applies computed properties with the decorator spec, and the way you can think about this is that you are doing the same thing, there's just a slightly different syntax in classic vs native. The list of added decorators is as follows:
+
+```js
+import { computed, action } from '@ember/object';
+import { * } from '@ember/object/computed';
+import { inject as service } from '@ember/service';
+import { inject as controller } from '@ember/controller';
+```
+
+That's in! Note we used the `*` here to represent all of the computed macros, I didn't want to type the full list out here, but they can all be used as decorators now!
+
+These decorators [have also been polyfilled via an addon](https://github.com/pzuraq/ember-decorators-polyfill). If you are using `ember-decorators`, the recommendation is to switch over to the polyfill before upgrading. This should be a pretty straightforward process of changing out the import paths, since the decorator APIs are for the most part the same, with the only differences being a few features that were deprecated in `ember-decorators` some time ago.
+
+## The Unofficial Decorators
+You may have noticed that not all of the decorators from `ember-decorators` made it into Ember directly. Specifically, the component decorators, the Ember Data decorators, and the observer and event listener decorators were left out. We'll cover the data decorators in the next section on addon support, but let's quickly go over the others.
+
+### Component Decorators
+
+The component decorators in `ember-decorators` provided decorators for some classic component APIs that don't have an alternative in native classes, such as `@tagName`, `@layout`, `@classNames`, and more. If you are converting your classic components to native classes, and you end up using these APIs at all, you'll need these decorators.
+
+However, a major part of Octane is also introducing the new Glimmer component API, and Glimmer components _don't_ require any of these APIs to accomplish the same thing. This is why we decided not to include these decorators in Ember directly, and instead continue to provide them in the `ember-decorators` project for any users who want to adopt native classes early, or who already have adopted them. These decorators will continue to be supported in `ember-decorators` for the foreseeable future, as long as classic components are supported in Ember.
+
+### Observers and Event Listeners
+
+Observers and event listeners are an aging part of the Ember object model. That's not to say that they aren't valuable constructs - observable/reactive APIs [are in consideration to be added to the language](https://github.com/tc39/proposal-observable), and event listeners are a fundamental part of JavaScript already. However, they aren't on-by-default for every native class out there, and we have been overly reliant on them in the past in Ember and have been moving away from them over time. In the future, it shouldn't be Ember's responsibility to provide these features to users - instead, they should be able to leverage the platform and add them when needed to their own classes, however they see fit.
+
+That said, they haven't been deprecated just yet - there are certain patterns which are still only possible with observers today (though this will be changing with auto tracking in the near future), and observers and event listeners are fairly comingled in the code, so they make sense to deprecated together. However, given they probably don't have a much longer shelf-life, it didn't make sense to expand their functionality directly in Ember - _especially_ since they can only work with classes that extend from `EmberObject`.
+
+For users who need observers and event listeners, `ember-decorators` will continue to provide them and support them as long as they are available in Ember.
+
+### Ember Decorators v6
+
+The latest version of `ember-decorators` has been stripped of all decorators that are now a part of Ember - it just contains the component and observer/event listener decorators mentioned above. This means you can move forward to the official APIs and keep `ember-decorators` without any conflicts or extra weight added - you only bring what you use!
+
+## Addon Support and Ember Data
+Now, let's address the elephant in the room - if `ember-decorators` isn't providing data decorators anymore, and Ember isn't providing them, who is?
+
+This is where it may get a bit confusing to follow, so bear with me. As we mentioned above, the way we got the `computed()` function to work in both native _and_ classic classes was by bringing the internal APIs in Ember into alignment with native decorators. A consequence of this was that every computed property _macro_ in the Ember ecosystem has automatically become a decorator!
+
+If you've ever seen some code that looks like this:
+
+```js
+function computedFormattedPercent(percentPropertyName) {
+  return computed(percentPropertyName, function() {
+    let value = this.get(percentPropertyName);
+    if (!value) {
+      return '--';
+    }
+
+    value = value.toFixed(2);
+    return `${value}%`;
+  });
+}
+
+export default Component.extend({
+formattedPercentOfErrorBuilds: computedFormattedPercent('percentOfErrorBuilds'),
+formattedPercentOfFailedBuilds: computedFormattedPercent('percentOfFailedBuilds'),
+formattedPercentOfPassedBuilds: computedFormattedPercent('percentOfPassedBuilds'),
+});
+```
+
+_That_ is what we mean by a computed property macro - it _returns_ a computed property. That can now be used as a decorator:
+
+```js
+export default class Summary extends Component {
+  @computedFormattedPercent('percentOfErrorBuilds')
+  formattedPercentOfErrorBuilds;
+
+  @computedFormattedPercent('percentOfFailedBuilds')
+  formattedPercentOfFailedBuilds;
+
+  @computedFormattedPercent('percentOfPassedBuilds')
+  formattedPercentOfPassedBuilds;
+}
+```
+
+The code for the macro doesn't need to change at all. For the ecosystem as a whole, lots of addons use or provide their own custom computed properties, and now all of them are decorators!
+
+This includes Ember Data. `DS.attr`, `DS.hasMany`, and `DS.belongsTo` are all implemented as computed property macros under the hood, so they are all decorators now!
+
+```js
+const { Model, attr, hasMany } = DS;
+
+class Person extends Model {
+  @attr() name;
+  @hasMany() friends;
+}
+```
+
+One thing that may seem a little off here is that even though we aren't providing any arguments to the decorators, we still need to include parentheses. That's because these functions are functions that _return_ decorators, so you always have to call them first, even if you're not calling them with a value. Ember Data will likely be fixing this soon by providing a wrapper around the function that determines if it is called as a decorator a not, but in the meantime, it's safe to adopt as long as you always use parens.
+
+## Babel Transforms and Stage 1 vs Stage 2
+Since decorators are still not part of JavaScript directly, we have to use Babel transforms to set them up. This functionality used to be provided by the `@ember-decorators/babel-transforms` package, but now we provide it directly in the latest versions of `ember-cli-babel`! It was first enabled in v7.7.3, so if you're on an earlier version you may have to upgrade. That's all there is to it, you shouldn't need to setup any more configuration whatsoever!
+
+One change here is that when we added the transforms to Ember officially, we reverted them from the more recent stage 2 transforms to the stage 1/legacy transforms. The reasons for this are covered [in detail in the RFC for the decision](https://github.com/emberjs/rfcs/blob/master/text/0440-decorator-support.md), but the TL;DR is that TC39 has decided to do a large overhaul of the decorators spec, and in the meantime is recommending that the community use the older, more stable, and more well supported legacy transforms.
+
+`ember-decorators` supported both the stage 1 and stage 2 transforms simultaneously, so you should be able to move forward without issues if those were the only decorators you were using. Some additional addons  also provided decorators, such as `@ember-decorators/argument` and `ember-concurrency-decorators`, and these will need to be updated separately by their maintainers.
+
+## See You in a Month!
+That concludes the updates! I'll be half way around the world by the time Ember 3.10 is released, but so far it looks like it'll all be going very smoothly, and I absolutely believe the rest of the core team will be able to get it over the finish line 🏁
+
+I'm going to be taking some much needed rest for my honeymoon, but I'll be trying to get back into a regular cadence of blogging over the summer, as we continue to finish up Octane and push out new features. It's all coming together piece by piece, and I can't wait until we can finally announce it for everyone!
+
+So long for now! 👋

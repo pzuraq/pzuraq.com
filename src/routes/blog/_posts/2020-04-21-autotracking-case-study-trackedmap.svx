@@ -1,0 +1,711 @@
+---
+title: "Autotracking Case Study - TrackedMap"
+tagline: ""
+---
+
+This blog post is my fourth post in a series on autotracking, the new reactivity system in Ember.js. The previous three posts dug into the details of _how_ autotracking works.
+
+1. [What Is Reactivity?](https://www.pzuraq.com/what-is-reactivity/)
+2. [What Makes a Good Reactive System?](https://www.pzuraq.com/what-makes-a-good-reactive-system/)
+3. [How Autotracking Works](https://www.pzuraq.com/how-autotracking-works/)
+
+The upcoming posts in this series, by contrast, are going to be less theory oriented. Instead, we'll be examining how you can _use_ autotracking in practice. Pull-based
+reactivity can be somewhat counterintuitive to work with when you’re used to push-based reactivity, because it often requires a different way of approaching various
+problems. With that in mind, I have a number of case studies lined up to dig into, with the goal of demonstrating some intermediate and advanced autotracking techniques.
+
+1. TrackedMap _← This post_
+2. @localCopy
+3. @cached
+4. RemoteData
+5. Effect
+
+This list will likely grow over time, and suggestions and ideas are always welcome! By the end of this series, I'd like to have a comprehensive set of examples that developers can learn from that covers as many use cases as possible.
+
+So, let's get started!
+
+### Terminology
+
+A quick recap on some autotracking terminology. I used these terms loosely in previous posts, but now I want to define them more thoroughly so they can be used to describe the dynamics of what we're doing with autotracking:
+
+* **Tracked value**: A value that will, when consumed, entangle with any active tracked computations, and when updated, invalidate those computations.
+* **Tracked/memoized compututation**: A computation whose output is connected to any tracked values that were consumed during its runtime. It will only rerun if any of these values updates, otherwise it will return the previously computed value.
+* **Entanglement**: The act of linking a tracked value to a tracked computation.
+* **Consume**: To track a value, so that any state derived from the value will update the next time the value is updated.
+* **Dirty**: To update a value, so that any state derived from it is dirtied and will update the next time it is accessed.
+
+## What is TrackedMap?
+
+In this post, we're going to build a `TrackedMap` class from the ground up. `TrackedMap` is an autotracked version of JavaScript's built-in [`Map`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Map) class. It has the same public API as standard `Map` and behaves the same in every way, but it also integrates with autotracking.
+
+```js
+export default class Profile extends Component {
+  skills = new TrackedMap([
+    ['Ember.js', 'Expert'],
+    ['Archery', 'Novice'],
+    ['Cooking', 'Expert'],
+    ['Baking', 'Apprentice'],
+  ]);
+
+  // This will update whenever we update the `Ember.js` key
+  // in `skills`
+  get emberLevel() {
+    return this.skills.get('Ember.js');
+  }
+
+  // Whenever we add a new skill to, remove a skill from,
+  // or update a skill in the `skills` property,
+  // `expertSkills` will update.
+  get expertSkills() {
+    return Array.from(this.skills)
+      .filter(([skill, level]) => level === 'Expert');
+  }
+}
+```
+
+Whenever we read a key on a `TrackedMap`, it autotracks that key. If we ever update that key, by setting it to a new value for instance, then any derived values will also update. `TrackedMap` will also autotrack iterations, so that whenever we derive state from the _entire_ collection, using `forEach` or `Symbol.iterator` for example, that state will be updated if we add, remove, or update items in general.
+
+The techniques we'll use to do this can be used to wrap other types of collections as well: `Set`, `WeakMap`, even `Array`. They can also be used to create custom collections, or to wrap external libraries that provide classes and collections.
+
+### Why do we need a "tracked" Map?
+
+You may be thinking, why do we need to have a tracked version of `Map`? It's more to annotate and remember in general, and maybe it feels like it will be burdensome. The fact is though that in JavaScript, a `Map` is a form of _root state_. It is a class that is built-in to the language, like object properties. And like object properties and `@tracked`, if you want to use a `Map`, you probably want a tracked version of it.
+
+To see why, let's try to use a normal `Map` with autotracking. We'll start with a technique that was pushed during the original RFC for `@tracked` properties, and one that I was actually a proponent of at the time - resetting a tracked property that _contains_ the `Map` whenever something in it changes:
+
+```js
+export default class Profile extends Component {
+  skills = new Map([
+    ['Ember.js', 'Expert'],
+    ['Archery', 'Novice'],
+    ['Cooking', 'Expert'],
+    ['Baking', 'Apprentice'],
+  ]);
+
+  @action
+  setLevel(key, value) {
+    this.skills.set(key, value);
+    this.skills = this.skills;
+  }
+}
+```
+
+Right away we have a few issues:
+
+1. We have this very odd syntax, `this.skills = this.skills`. To a new Ember developer, this may look like a mistake, a refactoring error of some sort. It's not clear that this is meant to actually have a meaning just by looking at it.
+
+2. It's pretty easy to imagine that the developer may _forget_ to do this. There is no guarantee that updating the `Map` will also cause the tracked property to update, the developer always has to be vigilant and keep track of what is mutating, and when to reset it.
+
+3. We also don't have any _granularity_ here. We're updating the entire `Map` of skills each time any of them changes. This could lead to performance issues in the future, especially if we're dealing with a big collection.
+
+The issues run deeper than this though. Let's see what happens if we forget which root property _owns_ this state:
+
+```js
+export default class Parent extends Component {
+  @tracked map = new Map();
+
+  @action
+  updateMap(map) {
+    this.map = map;
+  }
+}
+```
+```hbs
+{{!-- components/parent.hbs --}}
+<Child @map={{this.map}} @onSave={{this.updateMap}} />
+```
+
+```js
+export default class Child extends Component {
+  @tracked localMap = this.args.map;
+
+  @action
+  updateLocal(key, value) {
+    this.localMap.set(key, value);
+    this.localMap = this.localMap;
+  }
+
+  @action
+  saveMap() {
+    this.args.onSave(this.localMap);
+  }
+}
+```
+
+In this example, the child is attempting to copy the map that was passed to it by the parent, and mutate it locally. We create a `localMap` tracked property and use that for local updates, and everything works as expected.
+
+The issue is, we aren't _actually_ creating a copy; we’re just assigning a reference to the `Map` in another location, the `localMap` class field. There's a subtle bug here, where we're mutating the original map, but it doesn't reflect that change in the parent until later when we call the `onSave()` action. Our data is out of sync with our UI, and the rest of our system in general. This will inevitably lead to more issues and headaches as time goes on.
+
+This is the danger that comes with attempting to sidestep autotracking. After working with this technique for some time in the early days of autotracking, I came to the conclusion that these issues would always arise in time. The only way to avoid them in general is to ensure that _any_ root state that is mutated and updated is _always_ tracked, and this is why we need a `TrackedMap`.
+
+<aside>
+  <p>
+    Note that this rule is explicitly about state that is <strong>mutated</strong>. If you don't mutate a value to update it, but instead make a copy, then you won't run into the same issues. You can do this with libraries like <a href="https://immerjs.github.io/immer/docs/introduction">Immer.js</a>, which make the process of making copies with changes very easy and ergonomic, and mesh very well with autotracking.
+  </p>
+
+  <p>
+    There is an issue with Immer.js usage in Ember today, but it’s totally unrelated to autotracking and isn’t broken in Glimmer, and will be fixed Soon™ in Ember. See <a href="https://github.com/emberjs/ember.js/issues/18769">this issue</a> for more details.
+  </p>
+</aside>
+
+
+### Is this Ember.Array 2.0?
+
+Ember veterans may be reminded of `Ember.Array`, with its custom KVO methods like `objectAt` and `pushObject`, and how it felt for a long time like Ember had it's own custom version for everything that you had to learn and be aware of constantly. Wouldn't `TrackedMap` continue down that same path?
+
+The thing to remember is that autotracking doesn't eliminate annotations altogether - it reverses them. Before, for normal properties, we had to use `Ember.get` and `Ember.set` to access and update them. Now, we use `@tracked`. The responsibility is on the _definition_ of the state and, crucially, the _consumer_ doesn't need to know anything about this.
+
+```js
+class Person {
+  name = 'Liz';
+}
+
+class TrackedPerson {
+  @tracked name = 'Chris';
+}
+
+function sayHello(person) {
+  console.log(`Hello, ${person.name}!`);
+}
+```
+
+In this example, we could pass an instance of `Person` _or_ `TrackedPerson` to the `sayHello` function, and it would log exactly the same thing. The only difference is that if the function was being tracked, and we passed a `TrackedPerson`, we would now know to rerun the function whenever the person's `name` changed. By annotating root state this way, we can then treat it like _normal_ state in the rest of the program. _That_ is the ergonomic benefit that autotracking gives us.
+
+The same goes for collections like `TrackedMap`. The goal with creating a tracked version of `Map` isn't to make something that is similar, but slightly different. It's to create a drop-in replacement, one that is indistinguishable in every way from a normal `Map` in terms of public APIs. This way, our code won't have to care if it's working with a normal `Map` or a `TrackedMap`, just like it doesn't have to know if it's working with a normal property or a `@tracked` property.
+
+This is significantly different from `Ember.Array`. With Ember arrays, it was _very_ important to know which one you were working with. You had to use `objectAt` to access values, and `replace`/`pushObject`/`shiftObject`/etc. to update them, methods that were effectively the equivalent of `Ember.get` and `Ember.set` for arrays. Ember Arrays affected the code surrounding them much more in this way, and via the way dependencies chained on them with the `[]` property. There were even more complexities they introduced, between prototype extensions, the `Ember.A()` wrapper, array observers, array proxies, and more, but we won't get into all of that.
+
+So, in short - `TrackedMap`, and tracked classes like it, are _very_ different from `Ember.Array`. They don't have the same caveats, and like tracked properties they add clarity through making it clear what is meant to mutate and what isn't.
+
+## Implementation
+
+Now that we know what `TrackedMap` is, and why we need it, how do we build it?
+
+The first thing we'll need is a way to add tracked values _dynamically_. `@tracked` gives us a way to define properties that we know should be mutable ahead of time, but with a `Map` any number of keys can be defined over time, and we need to be able to track changes to all of them.
+
+It turns out, we don't need a new public API to do this. We can using `@tracked` to create a class whose sole purpose is to act as a storage cell:
+
+```js
+class Cell {
+  @tracked value;
+}
+```
+
+Now, whenever we need to track a new value, we can make a `new Cell()`. This may seem expensive, but it actually ends up being a pretty tiny object overall, and since we _usually_ need a place to store the underlying value anways, this solves both problems pretty well for a very low cost! Ember may add better APIs here in the future, but for the time being this should generally cover our needs without becoming a bottleneck.
+
+<aside>
+  <p>
+    Stepping through that, let's consider how we might architect this if we had some lower level APIs, like the <code>createTag()</code> function from the previous blog post, that allowed us to create our own tags. We would need to store both the tag <strong>and</strong> the value, so we have two options:
+  </p>
+
+  <ul>
+    <li>
+      Create two <code>Map</code>s, one to hold the value and one to hold the tag, which both use the same key to store the value. This solution works, but doubles our lookup time, so its more CPU intensive.
+    </li>
+    <li>
+      Create a single map, and an object that holds both the tag and the value. This is the strategy that we'll dig into in a minute, and it results in using more memory, but costs less in CPU time per operation. This is effectively the same as the <code>Cell</code> approach.
+    </li>
+  </ul>
+
+  <p>
+    So there is a tradeoff here in general, and in many cases we'll end up wanting to optimize for CPU time over memory usage, especially when memory usage is not excessive (in this case, it's a few extra bytes for a very small object). There are, of course, cases where you may want to do the opposite, and there may be autotracking APIs that enable this in the future, but for now the <code>Cell</code> approach actually is pretty optimal for memory.
+  </p>
+</aside>
+
+Ok, so we have tracked cells. Now, let's make a basic `TrackedMap` class with them.
+
+```js
+class TrackedMap {
+  #map = new Map();
+
+  // Private methods aren't a thing yet, unfortunately
+  _getCell(key) {
+    let cell = this.#map.get(key);
+
+    if (cell === undefined) {
+      cell = new Cell();
+      this.#map.set(key, cell);
+    }
+
+    return cell;
+  }
+
+  get(key) {
+    return this._getCell(key).value;
+  }
+
+  set(key, value) {
+    this._getCell(key).value = value;
+  }
+}
+```
+
+<aside>
+  If you aren't familiar with the <code>#map</code> syntax, it's the new way to define private fields in JavaScript. Check out <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Classes/Class_fields#Private_fields">the docs</a> to learn more about them.
+</aside>
+
+Let's walk through how this works:
+
+1. Our `TrackedMap` class has an internal, private `#map` property, which is a `Map` instance. This is how we store our cells. Since we're trying to replicate the functionality of a `Map`, it makes sense to use one as the backing storage for our class. It'll handle 90% of the functionality we need, and in the end we end up providing a thin layer of functionality on top.
+
+2. Whenever we access a value in the map, we first create a storage cell for it. That cell holds the _real_ value in a tracked property.
+
+3. When we `get` a key, we get the cell that backs that key, and return its `value` property. In doing this, we track the property for that cell specifically.
+
+4. When we `set` a key, we get the cell that backs that key, and update its `value` property. In doing this, we dirty the tracked property, and if that key has been accessed before with `get`, then we will be invalidating all tracking computations that consumed it.
+
+Awesome, this is a pretty good first pass! But there are a number of other APIs we need to address. `Map` has the following methods:
+
+* `clear`
+* `delete`
+* `entries`
+* `forEach`
+* `get`
+* `has`
+* `keys`
+* `set`
+* `values`
+* `Symbol.iterator`
+
+The first thing to notice is that we can divide these methods into two categories, methods that operate on a _single_ entry in the map, and methods that operate on _every_ entry, or the _whole collection_.
+
+* Single Entry Methods
+  * `delete`
+  * `get`
+  * `has`
+  * `set`
+
+* Whole Collection Methods
+  * `clear`
+  * `entries`
+  * `forEach`
+  * `keys`
+  * `values`
+  * `Symbol.iterator`
+
+This is critical, because we can make a very important performance optimization here for whole collection methods, but we'll get back to that in a moment. Let's make sure that we have all the single entry methods finished first.
+
+Now, `has` is going to be a bit trickier. We need to create a cell for `has` still, because it's result can change later if a value is set for it. But we need to return `false` even if that cell exists in the underlying map, and remember, it's perfectly valid for the value to be `undefined`, so we can't use that (or any other standard JS value) to represent this state. Instead, we can do this by creating a `Symbol` to represent the `DOES_NOT_EXIST` state.
+
+```js
+const DOES_NOT_EXIST = Symbol();
+
+class TrackedMap {
+  #map = new Map();
+
+  _getCell(key) {
+    let cell = this.#map.get(key);
+
+    if (cell === undefined) {
+      cell = new Cell();
+      cell.value = DOES_NOT_EXIST;
+      this.#map.set(key, cell);
+    }
+
+    return cell;
+  }
+
+  has(key) {
+    return this._getCell(key).value !== DOES_NOT_EXIST;
+  }
+
+  get(key) {
+    let value = this._getCell(key).value;
+
+    return value === DOES_NOT_EXIST ? undefined : value;
+  }
+
+  set(key, value) {
+    this._getCell(key).value = value;
+  }
+}
+```
+
+Perfect. Now, when we create a new cell, it will still be uninitialized until the value has actually been `set` for the first time, but we'll have a storage cell that is entangling properly the whole time.
+
+`delete` is a bit easier. We actually _do_ want to delete the cell in this case, otherwise we may accidentally leak memory, with the map continuing to grow as new values are added to it over time. We just want to make sure that we dirty before we delete the cell.
+
+```js
+const DOES_NOT_EXIST = Symbol();
+
+class TrackedMap {
+  #map = new Map();
+
+  _getCell(key) {
+    let cell = this.#map.get(key);
+
+    if (cell === undefined) {
+      cell = new Cell();
+      cell.value = DOES_NOT_EXIST;
+      this.#map.set(key, cell);
+    }
+
+    return cell;
+  }
+
+  has(key) {
+    return this._getCell(key).value !== DOES_NOT_EXIST;
+  }
+
+  get(key) {
+    let value = this._getCell(key).value;
+
+    return value === DOES_NOT_EXIST ? undefined : value;
+  }
+
+  set(key, value) {
+    this._getCell(key).value = value;
+  }
+
+  delete(key) {
+    let cell = this.#map.get(key);
+
+    if (cell !== undefined) {
+      // wipe out the cell value if it exists
+      cell.value = null;
+
+      this.#map.delete(key);
+    }
+  }
+}
+```
+
+We access the `#map` property directly so we don't create a cell if one doesn't exist and do more work for no reason.
+
+It's also ok to delete the cell like we do here, even though it means that the next time we access that key, we'll create a new one. This is safe because tracked computations don't hold onto references to specific tracked values. Whenever a computation is dirtied, it throws away all it knows about the values that it tracked, and reruns, getting _new_ tracked values. So, as long as we dirty the cell (which we do here with `cell.value = null`) before we delete it, any tracked computations that depended on it will rerun and get the new cell, _if needed_. If not, then the cell will be cleaned up and we won't leak memory!
+
+Ok, we now have all the single entry methods working! But before we get into the other methods, there's one important detail that we should address. We want to make a _drop-in_ replacement for native `Map`, and it won't be a drop-in replacement unless you can use `instanceof` on it:
+
+```js
+let map = new TrackedMap();
+
+map instanceof Map; // false, currently
+```
+
+To accomplish this, we'll need to refactor to use either native `Proxy` as a wrapper, or inheritance. Proxies are a bit more complicated, so for this post we'll use inheritance.
+
+```js
+const DOES_NOT_EXIST = Symbol();
+
+class TrackedMap extends Map {
+  _getCell(key) {
+    let cell = super.get(key);
+
+    if (cell === undefined) {
+      cell = new Cell();
+      cell.value = DOES_NOT_EXIST;
+      super.set(key, cell);
+    }
+
+    return cell;
+  }
+
+  has(key) {
+    return this._getCell(key).value !== DOES_NOT_EXIST;
+  }
+
+  get(key) {
+    let value = this._getCell(key).value;
+
+    return value === DOES_NOT_EXIST ? undefined : value;
+  }
+
+  set(key, value) {
+    this._getCell(key).value = value;
+  }
+
+  delete(key) {
+    let cell = super.get(key);
+
+    if (cell !== undefined) {
+      // wipe out the cell value if it exists
+      cell.value = null;
+
+      super.delete(key);
+    }
+  }
+}
+```
+
+This is very similar to what we had before overall, and now we don't need to have the internal `#map` instance, we can just use `super` to access the map's own storage. Pretty neat!
+
+Ok, now on to the whole collection methods.
+
+### Tracking Iteration
+
+Like I mentioned before, the collection methods are important because they give us a chance to make a perfomance optimization that, at scale, could matter quite a lot. The key thing to realize about any method that operates on the entire collection is that we don't really need to consume _every_ value in the collection.
+
+In fact, we can't! If you use `Symbol.iterator` or `forEach` on a map instance, and we later add a _new_ value to the map, the results would be invalid. But, we wouldn't have the storage cell for that new value ahead of time! There's nothing for us to consume when the method is called, and nothing for us to dirty later on.
+
+So, to get around this, we'll create a special, empty storage cell: the _collection_ cell.
+
+```js
+class TrackedMap extends Map {
+  #collectionCell = new Cell();
+
+  // ...single entry methods
+}
+```
+
+This cell represents the overall state of the collection. Whenever we call a collection method that is geared toward consumption, we will consume _this_ cell.
+
+```js
+class TrackedMap extends Map {
+  #collectionCell = new Cell();
+
+  // ...single entry methods
+
+  [Symbol.iterator]() {
+    // consume the cell, autotracking it
+    this.#collectionCell.value;
+
+    return super[Symbol.iterator]();
+  }
+
+  forEach(fn) {
+    this.#collectionCell.value;
+
+    return super.forEach(fn);
+  }
+
+  keys() {
+    this.#collectionCell.value;
+
+    return super.keys();
+  }
+
+  values() {
+    this.#collectionCell.value;
+
+    return super.values();
+  }
+
+  entries() {
+    this.#collectionCell.value;
+
+    return super.forEach();
+  }
+}
+```
+
+That _works_, but it doesn't read very well. The consumption looks like a mistake here, and could likely even trigger lint errors! Let's extract that to a function so at least we're only doing it in one place, and it's clear what we're doing.
+
+```js
+function consumeCell(cell) {
+  // consume the cell, autotracking it
+  cell.value;
+}
+
+class TrackedMap extends Map {
+  #collectionCell = new Cell();
+
+  // ...single entry methods
+
+  [Symbol.iterator]() {
+    consumeCell(this.#collectionCell);
+
+    return super[Symbol.iterator]();
+  }
+
+  forEach(fn) {
+    consumeCell(this.#collectionCell);
+
+    return super.forEach(fn);
+  }
+
+  keys() {
+    consumeCell(this.#collectionCell);
+
+    return super.keys();
+  }
+
+  values() {
+    consumeCell(this.#collectionCell);
+
+    return super.values();
+  }
+
+  entries() {
+    consumeCell(this.#collectionCell);
+
+    return super.forEach();
+  }
+}
+```
+
+And whenever _any_ method updates anything in the Map, we'll want to dirty it. We can do this by setting the value to anything, since it'll dirty even if the value hasn't changed. We'll also create a function that does this explicitly, to make it clear what we're doing.
+
+```js
+function dirtyCell(cell) {
+  // dirty the cell by setting it to a new value
+  cell.value = null;
+}
+
+class TrackedMap extends Map {
+  // ...
+
+  set(key, value) {
+    this._getCell(key).value = value;
+
+    dirtyCell(this.#collectionCell);
+  }
+
+  delete(key) {
+    let cell = super.get(key);
+
+    if (cell !== undefined) {
+      dirtyCell(cell.value);
+
+      super.delete(key);
+    }
+
+    dirtyCell(this.#collectionCell);
+  }
+
+  // ...
+}
+```
+
+Finally, we'll also want to add the `clear()` method. This method is a bit tricky - it affects the entire collection, _and_ every item in it. In order to be consistent, we'll need to dirty the collection cell, and every other cell too, to dirty any and all tracking computations that used any of the values.
+
+```js
+class TrackedMap extends Map {
+  // ...
+
+  clear() {
+    // Dirty the collection
+    dirtyCell(this.#collectionCell);
+
+    // Dirty every cell
+    super.forEach(dirtyCell);
+
+    // Actually clear
+    return super.clear();
+  }
+}
+```
+
+## Putting It All Together
+
+Here's our whole `TrackedMap` class, altogether:
+
+```js
+const DOES_NOT_EXIST = Symbol();
+
+class Cell {
+  @tracked value;
+}
+
+function consumeCell(cell) {
+  // consume the cell, autotracking it
+  cell.value;
+}
+
+function dirtyCell(cell) {
+  // dirty the cell by setting it to a new value
+  cell.value = null;
+}
+
+class TrackedMap extends Map {
+  #collectionCell = new Cell();
+
+  _getCell(key) {
+    let cell = this.#map.get(key);
+
+    if (cell === undefined) {
+      cell = new Cell();
+      cell.value = DOES_NOT_EXIST;
+      this.#map.set(key, cell);
+    }
+
+    return cell;
+  }
+
+  // Single Entry Methods
+
+  has(key) {
+    return this._getCell(key).value !== DOES_NOT_EXIST;
+  }
+
+  get(key) {
+    let value = this._getCell(key).value;
+
+    return value === DOES_NOT_EXIST ? undefined : value;
+  }
+
+  set(key, value) {
+    this._getCell(key).value = value;
+
+    // dirty the entire collection as well
+    dirtyCell(this.#collectionCell);
+  }
+
+  delete(key) {
+    let cell = super.get(key);
+
+    if (cell !== undefined) {
+      // wipe out the cell value if it exists
+      dirtyCell(cell);
+
+      super.delete(key);
+    }
+
+    dirtyCell(this.#collectionCell);
+  }
+
+  // Collection Methods
+
+  [Symbol.iterator]() {
+    consumeCell(this.#collectionCell);
+
+    return super[Symbol.iterator]();
+  }
+
+  forEach(fn) {
+    consumeCell(this.#collectionCell);
+
+    return super.forEach(fn);
+  }
+
+  keys() {
+    consumeCell(this.#collectionCell);
+
+    return super.keys();
+  }
+
+  values() {
+    consumeCell(this.#collectionCell);
+
+    return super.values();
+  }
+
+  entries() {
+    consumeCell(this.#collectionCell);
+
+    return super.forEach();
+  }
+
+  clear() {
+    // Dirty the collection
+    dirtyCell(this.#collectionCell);
+
+    // Dirty every cell
+    super.forEach(dirtyCell);
+
+    // Actually clear
+    return super.clear();
+  }
+}
+```
+
+In the end we have a `Map` class that is tracked. Any mutation to it will properly update all tracked computations that access it, and it will always consume and dirty properly. No need to worry about our state getting out of sync 😄
+
+If you're a fan of Immer.js you may not need `TrackedMap` after all, but it's helpful to know how to create this form of root state. These techniques can be used in general to wrap external libraries and make them consumable to Ember.js apps, and to create new forms of trackable root state as a whole. You also don't need to build them yourself - you can use the following packages instead:
+
+- [tracked-built-ins](https://github.com/pzuraq/tracked-built-ins)
+  - Does not support IE11
+  - Includes `TrackedArray`, `TrackedObject`, and maps and sets
+- [tracked-maps-and-sets](https://github.com/pzuraq/tracked-maps-and-sets)
+  - Supports IE11
+  - Includes `TrackedMap`, `TrackedWeakMap`, `TrackedSet`, and `TrackedWeakSet`
+
+Next time we'll build on these tools to explore some different autotracking techniques, with the `@localCopy` decorator!

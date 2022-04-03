@@ -1,0 +1,119 @@
+---
+title: "Ember 2019: The Next Edition"
+tagline: ""
+---
+
+Ember's 2019 roadmap process has begun, and we've already started seeing some great posts from various community members! We're on the tail end of the feature work for Octane, and now that we have some breathing room, I'd like to take a step back and look forward at what the next year in Ember could bring. In this post I'll be talking about what I'd like to see Ember focus on next year - the Next Edition™️ (disclaimer: not an actual name!).
+
+## Another Edition?
+You may be thinking, isn't it a little soon to be thinking about the next edition of Ember? We haven't even shipped Octane yet, after all, and a large part of the theme of the 2018 roadmap was to "finish what we started". We absolutely need to do that, first and foremost, so I don't think we should begin working on the Next Edition™️ until Octane is fully tested, documented, and out the door.
+
+To be clear, I don't think Ember should be trying to ship a new edition every year either. This isn't about having a steady flow of new releases - Editions are supposed to be released _when they make sense_, as in when new features and programming models have coalesced in Ember and we have a paradigm shifting moment. That is fundamentally at odds with the idea of releasing on a schedule - once per year like the next version of iOS, or every six weeks like Chrome.
+
+So why do I think we think we need a Next Edition™️ at all?
+
+The fact is that a lot of features were left on the cutting room floor to ship Octane. This was in a lot of ways a good thing, because it helped us keep Octane focused primarily on improving the _runtime_ experience for Ember developers. Almost all of the major features we landed - Glimmer Components, native classes, decorators, tracked properties - were primarily focussed on giving developers better primitives and tools in the code they write every day, for every component, service, and class in their apps. Collectively, these tools solve a set of pain points that have been irking Ember developers for years, since the early v2.0 days.
+
+But that doesn't mean that everything is fixed. There's another set of issues, one that I encounter almost daily. I'm talking of course about the pain points related to Ember's _build_ system. A short list of these grievances includes:
+
+* No tree shaking built into the build system
+* No way to specify lazy imports/bundles, except via lazy engines (which are not polished and still experimental)
+* No official way to co-locate component Templates and JavaScript, or to have single-file components.
+* Overall a confusing module resolution system - it's hard to figure out where a component or helper came from, especially for beginners.
+* No way to have local helpers or components. This is especially bad for routes, which often have components that are made specifically for a particular route and which are only used in one place, but end up polluting the global namespace.
+
+There are plenty of other, smaller paper cuts, but these are some of the major issues your average Ember developer has to deal with on a day-to-day basis. These are issues that have affected me personally for years, and that I had been eagerly awaiting the solutions to. Module Unification was meant to solve many of these problems, but as Tom Dale discussed in [his blog post on MU](https://blog.emberjs.com/2019/03/11/update-on-module-unification-and-octane.html) it ultimately turned out to be the wrong design.
+
+However, the core team has been thinking about these problems just as much as (if not more than) the runtime features - we have a plan to address each of them, and the design work for the solutions is anywhere from partially to mostly complete. In addition, some of these new features, such as template imports, would _definitely_ be considered paradigm shifting. So, we find ourselves in a unique situation, where we had to cut some features to ship Octane, but we still have enough features in the pipeline to make up a whole new edition.
+
+I think we should push on this opportunity, both to get these build improvements out there quickly, and to have a quick 1-2-punch to help show that Ember has updated significantly in the last couple of years, and to clear out the feature backlog (as much as possible, anyways)! That's why I think the focus this year should be on a _build-centric_ edition to followup on Octane's _runtime-centric_ features.
+
+## Key Features
+Like I said, the core team has been working a number of features for build improvements, including:
+
+1. Template Imports
+2. Single File Components
+3. New File Layout
+4. Embroider
+
+There are other features that are highly related, such as [template strict mode](https://github.com/emberjs/rfcs/pull/496), but these are the major high level features, and I'll dive into each of these briefly.
+
+### Template Imports
+
+When the core team decided to use imports in templates for components, helpers, and modifiers, it was the final nail in the coffin for Module Unification. MU required users to learn a large number of implicit lookup rules to figure out where something was resolved from, and those rules also made it very, very difficult to write a build system. This was one of major drawbacks of the system, and ultimately part of the reason it took so long to write, and why we decided not to ship it.
+
+By contrast, template imports solve both problems in a much more straightforward way. By using direct import statements, they make it easy for people to see where a value is coming from, and they make it easy for a bundler to follow that link as well, along with any other standardized tooling such as language servers or IDEs. They should also be fairly easy to learn, since the work the same as JavaScript imports which are ubiquitous in code today.
+
+They also solve one of the oldest complaints with Ember's build system - that it's too rigid. In Ember today, you have to put your files in just the right spot for anything to work. This is fine, until your app starts to grow to have hundreds or thousands of components! Template imports will allow users to place component, helper, and modifier files where they make sense and break the "rules" if they see fit. While other constructs like routes and models will still need to follow the rules, this should help loosen things up significantly, and make it easier both for users to learn and for them to organize their apps.
+
+### Single File Components
+
+Components in Ember have traditionally consisted of two files - a JavaScript file and a template file. This is a nice separation of concerns, but many times components don't actually _need_ to separate the two, and it can feel like a premature optimization. It also prevents you from using named exports to export multiple components from the same file, which could be very useful with template imports.
+
+I think having a way to easily write a simple component, or multiple components, in a single file should absolutely be part of Ember. I also still think that for sufficiently complex components, it should be possible to separate the template from the JavaScript, but being more flexible here will really help speed up development and lower the learning curve in my opinion.
+
+The primitives for template imports and Single File Components are actually interrelated, and are currently [in RFC](https://github.com/emberjs/rfcs/pull/454). The final design is not complete - there are a few different ideas for how they could be done - but once the primitives are shipped we'll be able to start experimenting, and I think we'll land on a final design relatively quickly after that!
+
+### New File Layout
+
+With template imports, we technically won't need as much of an enforced file structure as before. However, a lot of thinking that went into MU about what an app's file structure _should_ be is still relevant - even if it isn't enforced by code, we can have a convention as a community.
+
+This is the last part of MU that I would like to see salvaged. We've already begun this process with the [Component Template Co-location](https://github.com/emberjs/rfcs/blob/master/text/0481-component-templates-co-location.md) RFC, but I would also like to see:
+
+* Routes, route templates, and controllers co-located
+* Models, adapters, and serializers co-located
+* "Private" collections - if a component or utility is only used in a particular route, it you should put it in `/routes/my-route/-components/` or `/routes/my-route/-utils` or something like that.
+
+Changing the defaults for routes and models will help to setup the new "skeleton" for Ember applications, since their locations will still be enforced. Personally, I don't think component or helper locations should be enforced, but we could have the app blueprint and various generators set things up this way, and update our guides as well. We could also potentially include a _very_ lightweight and configurable filename linter for them in the default blueprint, but the main thing is that we have a general sense, as a community, of how an Ember app _should_ be organized - and that it's better than what we have today.
+
+### Embroider
+
+Finally, the last feature I propose for the Next Edition™️ is to land the Embroider project in Ember CLI. Embroider is a new build pipeline for Ember apps that replaces much of the existing Broccoli-based build pipeline with one based on standard bundlers (currently Webpack, but in principle this could be replaced with another bundler). The general idea is that we should bring Ember apps, and the ecosystem of Ember addons, into alignment with the rest of the frontend web development ecosystem.
+
+Broccoli allows us to do some pretty incredible things, and it was a much better build tool that Grunt or Gulp back in the day. However, using it to bundle packages together is fairly complicated, and ultimately the current setup makes each individual package a "black box" that could be doing anything - generating random files, adding build steps, moving things around - and this makes it very difficult, maybe _impossible_, to treat a Broccoli based package in a standardized way.
+
+Broccoli will still be an essential part of the build system as a whole, but adopting a more standardized package layout and bundling pipeline will allow us to leverage more widely adopted tooling for large portions of Ember CLI. This, in turn, will mean we are _both_ more interoperable with the rest of the ecosystem, _and_ have less to maintain in our own ecosystem (building a bundler is a lot of work, as it turns out!) This is a win all around that'll allow us to focus more on the features that are _unique_ to Ember, instead of reinventing the wheel for the entire ecosystem.
+
+## Landing Svelte
+That's all of the features that I think should be core to the (as-of-yet-unnamed) Next Edition™️. However, there is one more thing I'd like to see happen in Ember in 2019. It involves cleaning up the cruft.
+
+With Octane landing soon, and many more features in the pipeline, there are now quite a few features in Ember that have modern alternatives and are a bit out dated. We absolutely should have an upgrade period, but as many other roadmap posts have pointed out, Ember needs to start moving a bit faster. Legacy features and code hurts us thrice:
+
+* It's confusing to new developers, since there are two ways of doing many things.
+* It's code we have to continue supporting - every time something breaks in observers, someone on the core team is getting pulled off of a new feature to work on the fix.
+* It's dead code that gets shipped to _everyone's_ applications. More weight, with no real benefit.
+
+I'm not suggesting we remove these features overnight! But it is time to start deprecating things. A few items on my short list are:
+
+* Observers
+* Computed Properties
+* Event listeners
+* `EmberObject`
+* `{{action}}`
+* Classic Components
+
+There are plenty more small things, but that would be a good start, and a hefty chunk of code! Some of these would probably need to stay around for quite some time - I can't see removing `EmberObject`  or Classic Components permanently any time soon - but we can start removing things progressively.  We can move some things into addons, and we can land "svelting", where users opt out of deprecated features and they get removed from Ember's code at build time. The goal should be that new Ember apps don't need to pay the cost at all, and existing apps can slowly remove these features over the next couple of major versions.
+
+## Extra Wishlist
+There are a few other items that I think are very important, but I don't think would be possible to accomplish _this_ year necessarily. We can try, but we can't do everything, and we definitely need to _focus_ on landing the features we do plan on. That said, if we somehow get through everything else by November, I wouldn't _mind_ seeing...
+
+* Work done on the story for "installing your way to Ember". Both from a feature standpoint, _and_ from an internal organization and code cleanup standpoint, this would be a huge step forward.
+* A better solution for query parameters. Every time I use them, they feel clunky and problematic, and [several](https://gokatz.me/blog/emberjs-2019-roadmap/) [blog](https://imposter-syndrome.lol/posts/a-few-thoughts-on-ember/) [posts](http://andrewcallahan.com/to-have-a-future-ember-must-kill-its-past/) have mentioned it now so it seems like that's not an uncommon opinion!
+* A replacement for controllers. In my experience, they are consistently the most confusing thing to new learners, and they don't fit neatly into Ember's learning model anymore. I'm not sure what the best solution here is (maybe a much simplified form of routable components?) but I do think we should replace them sooner rather than later.
+* A way to spread arguments onto a child component, similar to attributes, e.g.
+```handlebars
+<MyComponent ...arguments />
+```
+This would help immensely with component composability, and has been something we've been discussing on the core team for some time (we affectionately refer to the feature "splarguments" 😛)
+* A way to scope services to a component subtree, similar to React's Context API. This is something that we don't really have a great analog to today, and it's something that controllers _do_ solve, somewhat unintentionally, so it'd be ideal to have a replacement in the wings.
+
+## Have a Happy 2019!
+One common piece of motivational advice that I see around is to not compare yourself to other people, but instead to the person you were yesterday. It's hard to start thinking that way, whenever you want to dive into a new hobby, or get back into exercise, or improve yourself in any other way. I think it's something that the Ember community has struggled with historically. We've had a hard time admitting to ourselves that we aren't the biggest community, or the fastest growing framework, and that that may not change in a while.
+
+I've definitely gotten defensive of Ember in the past. I love this community, and I want to see it thrive. And yes, if we compare ourselves to the dominance of React, it may seem like we aren't going anywhere.
+
+But if we compare ourselves to _ourselves_, one year ago, we see a different story. I've seen [new community members](https://nullvoxpopuli.com/) come and join us, and start making real contributions. I've seen a [Glimmer Native](https://github.com/bakerac4/glimmer-native) project start up, and start to make real progress. I've seen a ton of features land and code get cleaned up in Ember itself. And I've seen the first new edition of Ember come together, with a whole lot of help.
+
+In the end, we'll keep shipping improvements and features, and building a better framework. I think Ember has a niche, and it's going to stick around for quite a while as long as we keep pushing and working together. (At least, until WASM _really_ hits the scene and everyone ditches JavaScript altogether 😛)
+
+So have a great year everyone! I look forward to making Ember better with all of your help!

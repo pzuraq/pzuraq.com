@@ -7,7 +7,10 @@ declare namespace App {
 
   interface Platform {}
 
-  interface Session {}
+  interface Session {
+    theme: 'light' | 'dark' | 'system';
+    prefersTheme?: 'light' | 'dark';
+  }
 
   interface Stuff {}
 }

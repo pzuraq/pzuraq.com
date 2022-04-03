@@ -1,0 +1,422 @@
+---
+title: "Do You Need EmberObject?"
+tagline: ""
+---
+
+As native classes have stabilized and more and more of the Ember community has begun converting over to them, I've heard a lot of misinformation being spread around about what they are and aren't capable of. This is a pretty important transition for Ember, so I wanted to set the record straight really quickly about a few key things.
+
+## Myth 1: Computed properties only work with class that extend EmberObject
+
+One pervading idea I've heard a lot is that computed properties, one of Ember's core APIs for creating reactive values, only work with classes that extend from EmberObject, either using classic class or native class syntax.
+
+As of Ember 3.10 (and earlier with the [polyfill](https://github.com/pzuraq/ember-decorators-polyfill)), computed properties are now native JavaScript decorators. This means that they can work with *any JavaScript class*.
+
+```js
+class Person {
+  firstName = 'Liz';
+  lastName = 'Hewell Garrett';
+
+  @computed('firstName', 'lastName')
+  get fullName() {
+    return `${this.firstName} ${this.lastName}`;
+  }
+}
+
+let liz = new Person();
+
+liz.fullName; // Liz Hewell Garrett
+```
+
+The key difference for classes that don't extend from EmberObject is that they don't have a `set` *method* that can be used to invalidate the computed properties. There are three ways that we can work around this:
+
+1. Use the functional version of `set` instead.
+
+    ```js
+    import { set } from '@ember/object';
+
+    set(liz, 'firstName', 'Elizabeth');
+    ```
+
+2. In modern versions of Ember, use `@tracked` for these values, so you can treat them like standard properties.
+
+    ```js
+    class Person {
+      @tracked firstName = 'Liz';
+      @tracked lastName = 'Hewell Garrett';
+
+      @computed('firstName', 'lastName')
+      get fullName() {
+        return `${this.firstName} ${this.lastName}`;
+      }
+    }
+
+    let liz = new Person();
+
+    liz.firstName = 'Elizabeth';
+    ```
+
+3. You can also use the functional version of `notifyPropertyChange` if you were using that method before. This is generally only used when you're doing very detailed micromanagement of state, but it translates over pretty directly.
+
+    ```js
+    import { notifyPropertyChange } from '@ember/object'
+
+    // update the value
+    liz.firstName = 'Elizabeth';
+
+    // notify that the value has changed
+    notifyPropertyChange(liz, 'firstName');
+    ```
+
+As a side note, computed properties now also support native setters when being set directly. If you use them along with tracked values, you shouldn't need to use `set` to update anything:
+
+```js
+class Person {
+  @tracked firstName = 'Liz';
+  @tracked lastName = 'Hewell Garrett';
+
+  @computed('firstName', 'lastName')
+  get fullName() {
+    return `${this.firstName} ${this.lastName}`;
+  }
+
+  set fullName(value) {
+    let [firstName, ...lastNames] = value.split(' ');
+
+    this.firstName = firstName;
+    this.lastName = lastNames.join(' ');
+  }
+}
+
+let liz = new Person();
+
+liz.firstName = 'Elizabeth';
+liz.fullName = 'Elizabeth Hewell Garrett';
+```
+
+## Myth 2: Observers only work with classes that extend from EmberObject
+
+This myth is a bit trickier, as Ember did not add an observer decorator directly to the framework. If you still use [ember-decorators](https://ember-decorators.github.io/ember-decorators/), you may also have noticed if you ever tried to use [@observes](https://ember-decorators.github.io/ember-decorators/docs/api/modules/@ember-decorators/object#observes) on a native class like so:
+
+```js
+class MyClass {
+  @observes('foo')
+  someObserver() {
+    // ...
+  }
+}
+```
+
+You would get an error message like this:
+
+```
+You attempted to use @observes on MyClass#someObserver, which does not extend
+from EmberObject. Unfortunately this does not work with stage 1 decorator
+transforms, and will break in subtle ways. You must rewrite your class to
+extend from EmberObject.
+```
+
+This definitely sounds like "observers only work with EmberObject" (and we could probably work on that error message), but the truth here is that observer *decorators* only work with EmberObject. This is because decorators today are a bit limited - they can't do any setup code on the object when it is instantiated, and observers need to initialize themselves after an object has been constructed. However, there is another API we can use to add observers to the class: `addObserver`.
+
+```js
+import { action } from '@ember/object';
+import { addObserver, removeObserver } from '@ember/object/observers';
+
+export class MyClass {
+  constructor() {
+    addObserver(this, 'foo', this.someObserver);
+  }
+
+  cleanup() {
+    removeObserver(this, 'foo', this.someObserver);
+  }
+
+  @action
+  someObserver() {
+    // ...
+  }
+}
+```
+
+Note that we're using the `@action` decorator here to bind the context of the `someObserver` method, so it's `this` always refers to the class instance. This also makes the code in the `cleanup` method much easier to read and work with, since we need to refer to a stable value to remove it. Also note that the `cleanup` method here is just a normal method - it's not a lifecycle hook, so it would have to be called manually at some point (also true of `destroy` on EmberObject).
+
+This is definitely much less ergonomic than `observer()` or `@observes()`, but observers have been considered an anti-pattern in Ember for quite some time now, and with autotracking becoming available they should become less and less necessary over time. The point here is mainly that if you *need* an observer, for instance for backwards compatibility, there is a way to do it entirely with native classes, and without EmberObject at all.
+
+## Myth 3: Event listeners only work with classes that extend from EmberObject
+
+Much like observers, event listeners also didn't get a decorator equivalent to the `on()` method for defining them. However, like observers, there is another API that can be used to define them:
+
+```js
+import { action } from '@ember/object';
+import { addListener, removeListener, sendEvent } from '@ember/object/events';
+
+export class MyClass {
+  constructor() {
+    addListener(this, 'event', this.handleEvent);
+  }
+
+  cleanup() {
+    removeListener(this, 'event', this.handleEvent);
+  }
+
+  @action
+  handleEvent() {
+    // ...
+  }
+}
+
+let instance = new MyClass();
+
+// trigger the event
+sendEvent(instance, 'event');
+```
+
+This is, like observers, less ergonomic than it used to be, but can be used if necessary to maintain backwards compatibility. Alternatively, you could use a plain JS library that implements a *generic* event listener API, such as [events](https://www.npmjs.com/package/events) or [EventEmitter3](https://www.npmjs.com/package/eventemitter3):
+
+```js
+import { action } from '@ember/object';
+import EventEmitter from 'events';
+
+export class MyClass {
+  #emitter = new EventEmitter();
+
+  constructor() {
+    this.#emitter.on('event', this.handleEvent);
+  }
+
+  sendEvent(...args) {
+    this.#emitter.emit('event', ...args);
+  }
+
+  @action
+  handleEvent(...args) {
+    // ...
+  }
+}
+
+let instance = new MyClass();
+
+// trigger the event
+instance.sendEvent(123);
+```
+
+## Myth 4: Mixins only work with EmberObject
+
+This myth is actually mostly true: Ember's `Mixin` class is really only designed to work with EmberObject, and there are no plans to update it. There are a lot of reasons for this (mostly tied to the way that classic classes were designed to work under the hood), but that doesn't mean there aren't alternatives. There are actually a few, in order of preference:
+
+- **Utility functions.** In general, mixins are often about sharing *methods* between a few classes. You can usually pull out most method code into a function, and then use that function in both classes.
+
+  ```js
+  // Before
+  const HelloMixin = Mixin.create({
+    sayHello() {
+      console.log(this.message);
+    }
+  });
+
+  const MyComponent = Component.extend(HelloMixin, {
+    message: 'hello';
+  });
+
+  // After
+  function sayHello(message) {
+    console.log(message);
+  }
+
+  class MyComponent extends Component {
+    sayHello() {
+      sayHello('hello');
+    }
+  }
+  ```
+
+- **Services.** In cases where mixins methods or properties are interacting with other long-lived state, such as a service, it may make sense to create a new service to encapsulate the functionality. You can inject whatever services are needed into the intermediary service, and it can manage its own state.
+
+  ```js
+  // Before
+  const DataMixin = Mixin.create({
+    store: service(),
+
+    getData() {
+      this.store.query(this.url);
+    }
+  });
+
+  const MyComponent = Component.extend(DataMixin, {
+    url: 'my/example/api';
+
+    init() {
+      this._super(...arguments);
+
+      this.dataPromise = this.getData();
+    }
+  });
+
+  // After
+  // services/data.js
+  export default DataService extends Service {
+    @service store;
+
+    getData(url) {
+      this.store.query(url);
+    }
+  }
+
+  // components/my-component.js
+  class MyComponent extends Component {
+    @service data;
+
+    constructor() {
+      super(...arguments);
+
+      this.dataPromise = this.data.getData('my/example/api');
+    }
+  }
+  ```
+
+  Note that simple helper functions that accept the service or its state as an argument can also work here.
+
+- **Delegates.** If you prefer to work within the OOP model and mindset, one option is to avoid inheritance altogether and focus instead of creating independent classes that do one thing, and do it well. This is the [*delegate* pattern](https://en.wikipedia.org/wiki/Delegation_pattern), where you share functionality by delegating responsibilities to different objects. For example, instead of using Ember's built-in `Evented` mixin, we could the EventEmitter package that I discussed earlier:
+
+  ```js
+  // Before
+  const MyObject = EmberObject.extend(Evented, {
+    init() {
+      this._super(...arguments);
+      this.on('someEvent', this.doThings);
+    },
+
+    doThings() {
+      // ...
+    },
+
+    triggerEvent(...args) {
+      this.send('someEvent', ...args);
+    },
+  });
+
+  // After
+  import EventEmitter from 'events';
+
+  class MyObject {
+    emitter = new EventEmitter();
+
+    constructor() {
+      this.emitter.on('someEvent', this.doThings);
+    }
+
+    doThings() {
+      // ...
+    }
+
+    triggerEvent(...args) {
+      this.emitter.emit(...args);
+    }
+  }
+  ```
+
+  With this solution, it's very clear which class is responsible for which functionality. When you have some business logic that is highly stateful and self contained, it may make sense to create delegate objects to model the logic and use them throughout your codebase, rather than using mixins for multiple inheritance.
+
+- **Class decorators.** There are still times where you really do need some way to annotate a class and provide some extra functionality or information to it, and where all of the previous methods would require a lot of boilerplate and be very verbose. In these cases, you can use a class decorator:
+
+  ```js
+  function withEvents(Class) {
+    return class WithEvents extends Class {
+      // mixin things here...
+    }
+  }
+
+  @withEvents
+  class MyClass {
+
+  }
+  ```
+
+  Class decorators are a function that receives the the class definition as its first parameter, and can return a new class. So you can extend the class and add some functionality to it, in a similar way to classic class mixins. If you want to add parameters to a class decorator, you can create a function that *returns* a decorator:
+
+  ```js
+  function withEvents(...eventNames) {
+    return (Class) => {
+      return class WithEvents extends Class {
+        // mixin things here...
+      }
+    }
+  }
+
+  @withEvents('event', 'types')
+  class MyClass {}
+  ```
+
+### A note on decorators stability
+
+Decorators are still an in-flux spec. The usage of a decorator isn't likely to change much, but the way you *define* them is.
+
+```js
+// this will probably change
+function myMixin(Class) {}
+
+// this will probably *not* change
+@myMixin
+class MyClass {
+  // this also will probably not change
+  @tracked foo;
+}
+```
+
+This is why we don't generally recommend that you write a large number of class field and method decorators. However, class decorators are much safer, since they are simple functions and will likely be very easy to codemod:
+
+```js
+@myMixin
+export default class MyClass {}
+
+// can be codemodded to
+
+class MyClass {}
+
+export default myMixin(MyClass);
+```
+
+You can also use class decorators like this directly, and avoid decorator syntax altogether.
+
+## What do you need EmberObject for?
+
+That's a lot of functionality we just covered! So if all of these features are usable without EmberObject, why do we need it at all?
+
+There are of course backwards compatibility concerns. Ember defines a lot of its objects with EmberObject as a base class, and since many users are still using classic class syntax, it'll need to be that way for quite some time. Addon authors who wrote their own base classes will also need to continue extending EmberObject, until they release their next major version at least. And if you're depending on a mixin provided by a library, or by Ember, you will still need to use EmberObject to get its functionality.
+
+But in general, the answer is: **You don't!**
+
+All of the related functionality of Ember has either been made compatible with both native and classic syntax, or in the case of mixins has multiple alternatives in the native class world. We've been working really hard to make sure this is the case, because we want to make sure that updating is as smooth a process as possible, without the need for big rewrites and completely redoing everything.
+
+So, if you find yourself in a situation where you think you need to extend EmberObject for some reason or another, and it's not because you're using a mixin from a library you don't control, please, reach out! I'm usually available in #st-native-classes and #topic-octane-migration channels on the [community Discord](https://discordapp.com/invite/emberjs), and always happy to help figure out the transition path to native classes. And, there's always the possibility we missed something, or there's a bug or another issue, and we'd like to get those solved right away.
+
+The end result should be that if you ever define a class extending from EmberObject, like so:
+
+```js
+const Person = EmberObject.extend({
+  fullName: computed('firstName', 'lastName', function() {
+    return `${this.firstName} ${this.lastName}`;
+  });
+});
+
+let liz = Person.create({ firstName: 'Liz', lastName: 'Hewell Garrett' });
+```
+
+You should be able to update it to an equivalent class with native syntax:
+
+```js
+class Person {
+  constructor(firstName, lastName) {
+    this.firstName = firstName;
+    this.lastName = lastName;
+  }
+
+  @computed('firstName', 'lastName')
+  get fullName() {
+    return `${this.firstName} ${this.lastName}`;
+  }
+}
+
+let chris = new Person('Chris', 'Hewell Garrett');
+```
+
+There will sometimes be changes, like the way the class is constructed, but you won't need to completely rewrite all your computed properties, and you can continue to use `get`, `set`, `notifyPropertyChange`, and even observers and event listeners on native classes - it all still works!
