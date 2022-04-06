@@ -5,6 +5,10 @@
     <meta name="description" content="" />
 
     <link rel="icon" href="%svelte.assets%/assets/nebs.png" />
+    <meta
+      content="width=device-width, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no"
+      name="viewport"
+    />
 
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -16,7 +20,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     %svelte.head%
   </head>
-  <body>
+  <body class="system md:text-lg text-primary bg-inverse">
+    <script>
+      const theme = localStorage.getItem('theme');
+
+      if (theme) {
+        document.body.classList.remove('system');
+        document.body.classList.add(theme);
+      }
+    </script>
     %svelte.body%
   </body>
 </html>

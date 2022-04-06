@@ -1,13 +1,13 @@
 ---
-title: "What Makes a Good Reactive System?"
-tagline: ""
+title: 'What Makes a Good Reactive System?'
+tagline: ''
 ---
 
 This blog post is the second in a series on _autotracking_, the new reactivity system in Ember.js. I also discuss the concept of reactivity in general, and how it manifests in JavaScript.
 
-1. [What Is Reactivity?](https://www.pzuraq.com/thinking-with-autotracking-what-is-reactivity/)
-2. What Makes a Good Reactive System? _← This post_
-3. How Autotracking Works
+1. [What Is Reactivity?](/blog/what-is-reactivity/)
+2. [What Makes a Good Reactive System?](/blog/what-makes-a-good-reactive-system/) _← This post_
+3. [How Autotracking Works](/blog/how-autotracking-works/)
 
 In the previous blog post, we discussed what it means for a system to be _reactive_. The definition I landed on for the purposes of this series was:
 
@@ -89,12 +89,13 @@ One of the most fundamental types of reactivity is _push-based_ reactivity. Push
 Events on their own are not particularly very declarative, though. They depend on each layer manually propagating the change, which means there are lots of small, imperative steps where things can go wrong. For instance, consider this custom `<edit-word>` web component:
 
 ```js
-customElements.define('edit-word',
+customElements.define(
+  'edit-word',
   class extends HTMLElement {
     constructor() {
       super();
 
-      const shadowRoot = this.attachShadow({mode: 'open'});
+      const shadowRoot = this.attachShadow({ mode: 'open' });
       this.form = document.createElement('form');
       this.input = document.createElement('input');
       this.span = document.createElement('span');
@@ -112,7 +113,7 @@ customElements.define('edit-word',
         this.updateDisplay();
       });
 
-      this.form.addEventListener('submit', e => {
+      this.form.addEventListener('submit', (e) => {
         this.isEditing = false;
         this.updateDisplay();
         e.preventDefault();
@@ -123,7 +124,7 @@ customElements.define('edit-word',
         this.updateDisplay();
       });
 
-      this.updateDisplay()
+      this.updateDisplay();
     }
 
     updateDisplay() {
@@ -131,7 +132,7 @@ customElements.define('edit-word',
         this.span.style.display = 'none';
         this.form.style.display = 'inline-block';
         this.input.focus();
-        this.input.setSelectionRange(0, this.input.value.length)
+        this.input.setSelectionRange(0, this.input.value.length);
       } else {
         this.span.style.display = 'inline-block';
         this.form.style.display = 'none';
@@ -139,7 +140,7 @@ customElements.define('edit-word',
         this.input.style.width = this.span.clientWidth + 'px';
       }
     }
-  }
+  },
 );
 ```
 
@@ -174,16 +175,18 @@ class Person {
 
 let liz = new Person();
 
-console.log(liz.fullName); 'Liz Hewell';
+console.log(liz.fullName);
+('Liz Hewell');
 
 set(liz, 'firstName', 'Elizabeth');
 
-console.log(liz.fullName); 'Elizabeth Hewell';
+console.log(liz.fullName);
+('Elizabeth Hewell');
 ```
 
 Under the hood in Classic Ember, this system worked via property notifications. Whenever we used a computed property, template, or observer for the first time, Ember would setup _dependency chains_ through to all of its dependencies. Then, when we updated the property with `set()`, it would notify those dependencies.
 
-![](/assets/blog/what-makes-a-good-reactive-system-1.png)
+![Ember-classic reactivity](/assets/blog/what-makes-a-good-reactive-system-1.png)
 
 Observers would run eagerly of course, but computed properties and templates would only update _when used_. This is what made them so much better than observers, in the end - they fulfilled the second principle of reactivity we just defined. Derived state (computeds and templates) became reactive when _used_, automatically.
 
@@ -192,6 +195,7 @@ This was the core of Ember's reactivity for a very long time, and drove most of 
 Also, while computed properties were better for performance than observers and event listeners on average, dependency chains and event notifications were still costly . Setting up the dependency system had to be done on startup, and every property change produced events that flowed throughout the entire system. While this was good, it could still have been better.
 
 ### Observables, Streams, and Rx.js
+
 Another take on the push-based model that makes things more declarative is the Observable model. It was popularized in JavaScript by [RxJS](https://rxjs-dev.firebaseapp.com/), and is used by Angular as the foundation for its reactivity.
 
 This model organizes events into _streams_, which are kind of like a lazy-array of events. Every time you push an event into one end of the stream, it will get passed along through various transformations until it reaches subscribers at the other end.
@@ -199,26 +203,24 @@ This model organizes events into _streams_, which are kind of like a lazy-array 
 ```js
 // Plain JS
 let count = 0;
-document.addEventListener(
-  'click',
-  () => console.log(`Clicked ${++count} times`)
-);
+document.addEventListener('click', () => console.log(`Clicked ${++count} times`));
 ```
+
 ```js
 // With Streams
 import { fromEvent } from 'rxjs';
 import { scan } from 'rxjs/operators';
 
 fromEvent(document, 'click')
-  .pipe(scan(count => count + 1, 0))
-  .subscribe(count => console.log(`Clicked ${count} times`));
+  .pipe(scan((count) => count + 1, 0))
+  .subscribe((count) => console.log(`Clicked ${count} times`));
 ```
 
 This may seem similar to Ember's observers on the surface, but they have a key difference - they are passed the values that they are observing directly, and return new values based on them. This means that they fulfill the second principle of good reactivity, because derived state is _necessarily_ reactive.
 
 The downside with streams is that they are by default always _eager_. Whenever an event is fired on one end, it immediately triggers all of the transformations that are observing that stream. By default, we do a lot of work for every single state change.
 
-![](/assets/blog/what-makes-a-good-reactive-system-2.png)
+![Stream reactivity](/assets/blog/what-makes-a-good-reactive-system-2.png)
 
 There are techniques to lower this cost, such as debouncing, but they require the user to actively be thinking about the flow of state. And this brings us to our third principle:
 
@@ -242,9 +244,9 @@ To get around this, every pull-based reactivity model has some tricks to lower t
 
 The Virtual DOM is probably one of the most famous features of React.js, and was one of the original keys to their success. The concept takes advantage of the fact that adding HTML to the browser is the most expensive part. Instead of doing this directly, the app creates a model that _represents_ the HTML, and React translates the parts that changed into _actual_ HTML.
 
-On initial render, this ends up being all the HTML in the app. But on rerenders, only the parts that have _changed_ are updated. This  minimizes one of the most expensive portions of a frontend application.
+On initial render, this ends up being all the HTML in the app. But on rerenders, only the parts that have _changed_ are updated. This minimizes one of the most expensive portions of a frontend application.
 
-![](/assets/blog/what-makes-a-good-reactive-system-3.png)
+![VDOM diffing example](/assets/blog/what-makes-a-good-reactive-system-3.png)
 
 The second way that React's reactivity model optimizes is by only rerunning the part that something has _definitely_ changed in. This is partially what the `setState` API (and the setter from the `useState` hook) are about.
 
@@ -253,24 +255,20 @@ class Toggle extends React.Component {
   state = { isToggleOn: true };
 
   handleClick = () => {
-    this.setState(state => ({
-      isToggleOn: !state.isToggleOn
+    this.setState((state) => ({
+      isToggleOn: !state.isToggleOn,
     }));
-  }
+  };
 
   render() {
-    return (
-      <button onClick={this.handleClick}>
-        {this.state.isToggleOn ? 'ON' : 'OFF'}
-      </button>
-    );
+    return <button onClick={this.handleClick}>{this.state.isToggleOn ? 'ON' : 'OFF'}</button>;
   }
 }
 ```
 
 When a user changes state via one of these, only that component (and its subcomponents) are rerendered during the next pass.
 
-![](/assets/blog/what-makes-a-good-reactive-system-4.png)
+![VDOM diff tree](/assets/blog/what-makes-a-good-reactive-system-4.png)
 
 One interesting choice here that was made to maintain consistency is that `setState` and `useState` do not update immediately when called. Instead, they wait for the _next_ render to update, since logically the new state is new input to the app (and necessitates another rerender). This is counter-intuitive to many users at first before they learn React, but it actually brings us to our final principle of good reactivity:
 
@@ -314,8 +312,8 @@ Vue is also a virtual DOM based framework, but it has an extra trick up its slee
 ```js
 const vm = new Vue({
   data: {
-    a: 1
-  }
+    a: 1,
+  },
 });
 ```
 
@@ -328,15 +326,15 @@ const vm = new Vue({
   el: '#example',
 
   data: {
-    message: 'Hello'
+    message: 'Hello',
   },
 
   computed: {
     reversedMessage() {
-      return this.message.split('').reverse().join('')
-    }
-  }
-})
+      return this.message.split('').reverse().join('');
+    },
+  },
+});
 ```
 
 The `reversedMessage` property will automatically subscribe to the changes of `message` when it runs, and any future changes to the `message` property will update it.
@@ -351,7 +349,7 @@ The final reactivity model I want to discuss in this post isn't actually a JavaS
 
 As such, Elm follows the pure-functional reactivity model I discussed in my last post. All of the state in the application is fully externalized, and for every change, Elm reruns the application function to produce new output.
 
-![](/assets/blog/what-makes-a-good-reactive-system-5.svg)
+![Elm render loop](/assets/blog/what-makes-a-good-reactive-system-5.svg)
 
 Because of this, Elm can take advantage of caching technique known as _memoization_. As the application function is running, it breaks the model down into smaller chunks for each sub-function, which are essentially components. If the arguments to that function/component have not changed, then it uses the last result instead.
 
@@ -389,15 +387,15 @@ But that's a topic for the next post!
 
 So, in this post we looked at a number of different reactivity models, including:
 
-* HTML/CSS
-* Push-based reactivity
-  * Vanilla JavaScript
-  * Ember Classic
-  * Observables/Rx.js
-* Pull-based reactivity
-  * React.js
-  * Vue.js
-  * Elm
+- HTML/CSS
+- Push-based reactivity
+  - Vanilla JavaScript
+  - Ember Classic
+  - Observables/Rx.js
+- Pull-based reactivity
+  - React.js
+  - Vue.js
+  - Elm
 
 We also extracted a few general principles for designing a good reactive system:
 

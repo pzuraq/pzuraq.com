@@ -1,19 +1,19 @@
 ---
-title: "Coming Soon in Ember Octane: Angle(nbsp)Brackets & Named(nbsp)Arguments"
-tagline: ""
+title: 'Coming Soon in Ember Octane: Angle(nbsp)Brackets & Named(nbsp)Arguments'
+tagline: ''
 ---
 
 Hello again, and welcome back! This is the second part of the multipart _Coming Soon in Ember Octane_ series, where we're previewing some of the various features that are landing in Ember's upcoming Octane edition, including:
 
-* [Native Classes (+Decorators)](https://www.pzuraq.com/coming-soon-in-ember-octane-part-1-native-classes/)
-* [Angle Brackets & Named Arguments](https://www.pzuraq.com/coming-soon-in-ember-octane-part-2-angle-brackets-and-named-arguments/) _← this post_
-* [Tracked Properties](https://www.pzuraq.com/coming-soon-in-ember-octane-part-3-tracked-properties/)
-* [Modifiers](https://www.pzuraq.com/coming-soon-in-ember-octane-part-4-modifiers/)
-* [Glimmer Components](https://www.pzuraq.com/coming-soon-in-ember-octane-part-5-glimmer-components/)
+- [Native Classes (+Decorators)](/blog/coming-soon-in-ember-octane-part-1-native-classes)
+- [Angle Brackets & Named Arguments](/blog/coming-soon-in-ember-octane-part-2-angle-brackets-and-named-arguments) _← this post_
+- [Tracked Properties](/blog/coming-soon-in-ember-octane-part-3-tracked-properties)
+- [Modifiers](/blog/coming-soon-in-ember-octane-part-4-modifiers)
+- [Glimmer Components](/blog/coming-soon-in-ember-octane-part-5-glimmer-components)
 
 These aren't _all_ of the new features that will be part of Octane, but they're the ones that I'm most familiar with personally, so I can give y'all the low down!
 
-This series is aimed at existing Ember users, but if you're new to Ember or tried Ember a while ago and want to see how things are changing, I'll be providing context on the existing features as we go along. These posts won't be doing deep dives on all the edge cases of the functionality, they are moreso meant as an overview of what's coming. If you're curious about what an _edition_ is exactly, you can check out a quick break down in [the first post in the series](https://www.pzuraq.com/coming-soon-in-ember-octane-part-1-native-classes/#whatareeditions).
+This series is aimed at existing Ember users, but if you're new to Ember or tried Ember a while ago and want to see how things are changing, I'll be providing context on the existing features as we go along. These posts won't be doing deep dives on all the edge cases of the functionality, they are moreso meant as an overview of what's coming. If you're curious about what an _edition_ is exactly, you can check out a quick break down in [the first post in the series](/blog/coming-soon-in-ember-octane-part-1-native-classes#what-are-editions).
 
 ## Ember Templates: HTML++
 
@@ -22,7 +22,8 @@ One of the things that sets Ember apart from other component based frameworks is
 Ember templates draw their roots from the Handlebars templating language which used `{{doubleCurly}}` syntax to insert values into templates. For the first version of Ember, this templating language remained pretty basic. You could reference values in templates, render components, and use specialized helpers like `{{outlet}}` for routing, `{{if}}` for branching, and `{{each}}` for looping:
 
 ```handlebars
-Hello, {{fullName}}!
+Hello,
+{{fullName}}!
 
 {{#if hasTodos}}
   <ul>
@@ -40,13 +41,15 @@ Hello, {{fullName}}!
 Things got more interesting as that language evolved, particularly when the ability to add _nested_ helpers was added, since this mean that helpers could be composed. Logic that previously _had_ to exist on classes in the form of computed properties could now exist in the template:
 
 ```handlebars
-Hello, {{join (capitalize firstName) (capitalize lastName)}}!
+Hello,
+{{join (capitalize firstName) (capitalize lastName)}}!
 
 {{#if (gt todos.length 0)}}
   <ul>
     {{#each todos as |todo index|}}
       <li>
-        {{add index 1}}. {{todo-item-component todo=todo}}
+        {{add index 1}}.
+        {{todo-item-component todo=todo}}
       </li>
     {{/each}}
   </ul>
@@ -70,11 +73,13 @@ Another major piece of functionality which was added was the ability for helpers
 
 ```handlebars
 <!-- main.hbs -->
-Hello, {{join (capitalize firstName) (capitalize lastName)}}!
+Hello,
+{{join (capitalize firstName) (capitalize lastName)}}!
 
 {{#if (gt todos.length 0)}}
   {{#todo-list todos=todos as |item index|}}
-    {{add index 1}}. {{item}}
+    {{add index 1}}.
+    {{item}}
   {{/todo-list}}
 {{else}}
   No todos!
@@ -112,11 +117,13 @@ Angle bracket syntax for components draws heavily from other templating language
 
 ```handlebars
 <!-- main.hbs -->
-Hello, {{join (capitalize firstName) (capitalize lastName)}}!
+Hello,
+{{join (capitalize firstName) (capitalize lastName)}}!
 
 {{#if (gt todos.length 0)}}
-  <TodoList role="list" @todos={{todos}} as |Item index|>
-    {{add index 1}}. <Item/>
+  <TodoList role='list' @todos={{todos}} as |Item index|>
+    {{add index 1}}.
+    <Item />
   </TodoList>
 {{else}}
   No todos!
@@ -162,7 +169,7 @@ We can immediately tell now by looking at this template that `@todos` is an argu
 export default class TodoList extends Component {
   @computed('todos.length')
   get uncompletedTodos() {
-    return this.todos.filter(todo => !todo.completed);
+    return this.todos.filter((todo) => !todo.completed);
   }
 }
 ```
@@ -175,11 +182,13 @@ The final major change in Octane-style templates is to require `this` when refer
 
 ```handlebars
 <!-- main.hbs -->
-Hello, {{join (capitalize this.firstName) (capitalize this.lastName)}}!
+Hello,
+{{join (capitalize this.firstName) (capitalize this.lastName)}}!
 
 {{#if (gt this.todos.length 0)}}
-  <TodoList role="list" @todos={{this.todos}} as |Item index|>
-    {{add index 1}}. <Item/>
+  <TodoList role='list' @todos={{this.todos}} as |Item index|>
+    {{add index 1}}.
+    <Item />
   </TodoList>
 {{else}}
   No todos!
@@ -193,53 +202,56 @@ This change is subtle, but instantly provides much more context in templates. We
 Like last time, I'd like to show you a more complete example based on a real-life template, instead of having you just take my word for it based on a few small examples. This is a component from [emberobserver.com](https://emberobserver.com/), one with a fairly verbose template ([source here](https://github.com/emberobserver/client/blob/0c6058456803817673255fd91b0991d5a93916be/app/templates/components/large-search.hbs)):
 
 ```handlebars
-<div class="large-search with-default-styling">
-  <div class="search">
-    <div class="search-wrapper">
-      <input type="search"
-             placeholder="Search for addons, maintainers and categories"
-             autocomplete="off"
-             id="search-input"
-             spellcheck="false"
-             value={{query}}
-             oninput={{action (perform search) value="target.value"}}>
+<div class='large-search with-default-styling'>
+  <div class='search'>
+    <div class='search-wrapper'>
+      <input
+        type='search'
+        placeholder='Search for addons, maintainers and categories'
+        autocomplete='off'
+        id='search-input'
+        spellcheck='false'
+        value={{query}}
+        oninput={{action (perform search) value='target.value'}}
+      />
       {{#if query}}
-        <button
-          {{action clearSearch}}
-          class="close-button test-clear-search">
-          {{svg-icon "close"}}
+        <button {{action clearSearch}} class='close-button test-clear-search'>
+          {{svg-icon 'close'}}
         </button>
       {{/if}}
     </div>
-    <div class="readme-toggle">
-      {{input type="checkbox"
-              class="test-search-readmes"
-              id="search-readmes"
-              checked=searchReadmes
-              change=(action (perform toggleReadmeSearch))}}
-      <label for="search-readmes">Search readmes</label>
+    <div class='readme-toggle'>
+      {{input
+        type='checkbox'
+        class='test-search-readmes'
+        id='search-readmes'
+        checked=searchReadmes
+        change=(action (perform toggleReadmeSearch))
+      }}
+      <label for='search-readmes'>Search readmes</label>
     </div>
-    <h6 class="no-results {{if hasSearchedAndNoResults 'showing'}}">
+    <h6 class='no-results {{if hasSearchedAndNoResults "showing"}}'>
       No results found for "{{query}}"
     </h6>
   </div>
 
   {{#if results.length}}
-    <h4 class="result-info test-result-info">
+    <h4 class='result-info test-result-info'>
       Results for "{{query}}"
     </h4>
     {{#search-result-set
       results=results.displayingReadmes
       totalCount=results.totalReadmeCount
       fetchMore=fetchMoreReadmes
-      title="Readmes"
-      resultClass="readme-results"}}
-      <ul class="readme-list">
+      title='Readmes'
+      resultClass='readme-results'
+    }}
+      <ul class='readme-list'>
         {{#each results.displayingReadmes as |addon|}}
           <li>
             {{addon-details addon=addon}}
             {{#each (get _results.readmeMatchMap addon.id) as |match|}}
-              <div class="test-readme-match text-match">
+              <div class='test-readme-match text-match'>
                 ...{{dom-purify match use-profiles=(hash html=true) hook='target-blank'}}...
               </div>
             {{/each}}
@@ -251,13 +263,14 @@ Like last time, I'd like to show you a more complete example based on a real-lif
       results=results.displayingCategories
       totalCount=results.totalCategoriesCount
       fetchMore=fetchMoreCategories
-      title="Categories"
-      resultClass="category-results"}}
+      title='Categories'
+      resultClass='category-results'
+    }}
       <ul>
         {{#each results.displayingCategories as |category|}}
           <li>
-            {{#link-to "categories.show" category.slug}}
-              <span class="bullet">&#9632;</span>
+            {{#link-to 'categories.show' category.slug}}
+              <span class='bullet'>&#9632;</span>
               <div>{{category.name}} ({{category.totalAddonCount}})</div>
             {{/link-to}}
           </li>
@@ -268,21 +281,23 @@ Like last time, I'd like to show you a more complete example based on a real-lif
       results=results.displayingAddons
       totalCount=results.totalAddonsCount
       fetchMore=fetchMoreAddons
-      title="Addons"
-      resultClass="addon-results"}}
+      title='Addons'
+      resultClass='addon-results'
+    }}
       {{addon-list addons=results.displayingAddons}}
     {{/search-result-set}}
     {{#search-result-set
       results=results.displayingMaintainers
       totalCount=results.totalMaintainersCount
       fetchMore=fetchMoreMaintainers
-      title="Maintainers"
-      resultClass="maintainer-results"}}
+      title='Maintainers'
+      resultClass='maintainer-results'
+    }}
       <ul>
         {{#each results.displayingMaintainers as |maintainer|}}
           <li>
-            {{#link-to "maintainers.show" maintainer.name}}
-              <span class="bullet">&#9632;</span>
+            {{#link-to 'maintainers.show' maintainer.name}}
+              <span class='bullet'>&#9632;</span>
               <div>{{maintainer.name}}</div>
             {{/link-to}}
           </li>
@@ -298,45 +313,41 @@ Like last time, I'd like to show you a more complete example based on a real-lif
 And here is the same template rewritten with the various new features added in Octane:
 
 ```handlebars
-<div class="large-search with-default-styling">
-  <div class="search">
-    <div class="search-wrapper">
+<div class='large-search with-default-styling'>
+  <div class='search'>
+    <div class='search-wrapper'>
       <input
-        type="search"
-        placeholder="Search for addons, maintainers and categories"
-        autocomplete="off"
-        id="search-input"
-        spellcheck="false"
+        type='search'
+        placeholder='Search for addons, maintainers and categories'
+        autocomplete='off'
+        id='search-input'
+        spellcheck='false'
         value={{this.query}}
-        oninput={{action (perform this.search) value="target.value"}}
+        oninput={{action (perform this.search) value='target.value'}}
       />
       {{#if this.query}}
-        <button
-          {{action this.clearSearch}}
-          class="close-button test-clear-search"
-        >
-          {{svg-icon "close"}}
+        <button {{action this.clearSearch}} class='close-button test-clear-search'>
+          {{svg-icon 'close'}}
         </button>
       {{/if}}
     </div>
-    <div class="readme-toggle">
+    <div class='readme-toggle'>
       <Input
-        @type="checkbox"
+        @type='checkbox'
         @checked={{this.searchReadmes}}
         @change={{action (perform this.toggleReadmeSearch)}}
-
-        id="search-readmes"
-        class="test-search-readmes"
+        id='search-readmes'
+        class='test-search-readmes'
       />
-      <label for="search-readmes">Search readmes</label>
+      <label for='search-readmes'>Search readmes</label>
     </div>
-    <h6 class="no-results {{if this.hasSearchedAndNoResults 'showing'}}">
+    <h6 class='no-results {{if this.hasSearchedAndNoResults "showing"}}'>
       No results found for "{{this.query}}"
     </h6>
   </div>
 
   {{#if this.results.length}}
-    <h4 class="result-info test-result-info">
+    <h4 class='result-info test-result-info'>
       Results for "{{this.query}}"
     </h4>
 
@@ -344,16 +355,16 @@ And here is the same template rewritten with the various new features added in O
       @results={{this.results.displayingReadmes}}
       @totalCount={{this.results.totalReadmeCount}}
       @fetchMore={{this.fetchMoreReadmes}}
-      @title="Readmes"
-      @resultClass="readme-results"
+      @title='Readmes'
+      @resultClass='readme-results'
     >
-      <ul class="readme-list">
+      <ul class='readme-list'>
         {{#each this.results.displayingReadmes as |addon|}}
           <li>
             <AddonDetails @addon={{addon}} />
 
             {{#each (get this._results.readmeMatchMap addon.id) as |match|}}
-              <div class="test-readme-match text-match">
+              <div class='test-readme-match text-match'>
                 ...{{dom-purify match use-profiles=(hash html=true) hook='target-blank'}}...
               </div>
             {{/each}}
@@ -363,17 +374,17 @@ And here is the same template rewritten with the various new features added in O
     </SearchResultSet>
 
     <SearchResultSet
-      @title="Categories"
+      @title='Categories'
       @results={{this.results.displayingCategories}}
       @totalCount={{this.results.totalCategoriesCount}}
       @fetchMore={{this.fetchMoreCategories}}
-      @resultClass="category-results"
+      @resultClass='category-results'
     >
       <ul>
         {{#each this.results.displayingCategories as |category|}}
           <li>
-            {{#link-to "categories.show" category.slug}}
-              <span class="bullet">&#9632;</span>
+            {{#link-to 'categories.show' category.slug}}
+              <span class='bullet'>&#9632;</span>
               <div>{{category.name}} ({{category.totalAddonCount}})</div>
             {{/link-to}}
           </li>
@@ -382,27 +393,27 @@ And here is the same template rewritten with the various new features added in O
     </SearchResultSet>
 
     <SearchResultSet
-      @title="Addons"
+      @title='Addons'
       @results={{this.results.displayingAddons}}
       @totalCount={{this.results.totalAddonsCount}}
       @fetchMore={{this.fetchMoreAddons}}
-      @resultClass="addon-results"
+      @resultClass='addon-results'
     >
       <AddonList @addons={{this.results.displayingAddons}} />
     </SearchResultSet>
 
     <SearchResultSet
-      @title="Maintainers"
+      @title='Maintainers'
       @results={{this.results.displayingMaintainers}}
       @totalCount={{this.results.totalMaintainersCount}}
       @fetchMore={{this.fetchMoreMaintainers}}
-      @resultClass="maintainer-results"
+      @resultClass='maintainer-results'
     >
       <ul>
         {{#each this.results.displayingMaintainers as |maintainer|}}
           <li>
-            {{#link-to "maintainers.show" maintainer.name}}
-              <span class="bullet">&#9632;</span>
+            {{#link-to 'maintainers.show' maintainer.name}}
+              <span class='bullet'>&#9632;</span>
               <div>{{maintainer.name}}</div>
             {{/link-to}}
           </li>
@@ -410,7 +421,7 @@ And here is the same template rewritten with the various new features added in O
       </ul>
     </SearchResultSet>
   {{else if this.search.isRunning}}
-    <DotSpinner/>
+    <DotSpinner />
   {{/if}}
 </div>
 ```

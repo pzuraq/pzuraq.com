@@ -27,6 +27,20 @@ const config = {
   kit: {
     adapter: adapter(),
 
+    prerender: {
+      default: true,
+      crawl: true,
+    },
+
+    csp: {
+      mode: 'hash',
+      directives: {
+        'script-src': ['self', 'sha256-zfRvLbR3zlaekiwICEa9S3jjc9sLhqYte6tX4ScxNSI='],
+        'connect-src': ['self'],
+        'style-src': ['self', 'https://fonts.googleapis.com'],
+      },
+    },
+
     vite: {
       plugins: [postMeta()],
     },

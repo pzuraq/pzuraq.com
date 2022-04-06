@@ -1,17 +1,17 @@
 ---
-title: "Coming Soon in Ember Octane: Modifiers"
-tagline: ""
+title: 'Coming Soon in Ember Octane: Modifiers'
+tagline: ''
 ---
 
 Hello again, and welcome back! This is the fourth entry in the multipart _Coming Soon in Ember Octane_ series, where we're previewing some of the various features that are landing in Ember's upcoming Octane edition, including:
 
-* [Native Classes (+Decorators)](https://www.pzuraq.com/coming-soon-in-ember-octane-part-1-native-classes/)
-* [Angle Brackets & Named Arguments](https://www.pzuraq.com/coming-soon-in-ember-octane-part-2-angle-brackets-and-named-arguments/)
-* [Tracked Properties](https://www.pzuraq.com/coming-soon-in-ember-octane-part-3-tracked-properties/)
-* [Modifiers](https://www.pzuraq.com/coming-soon-in-ember-octane-part-4-modifiers/) _← this post_
-* [Glimmer Components](https://www.pzuraq.com/coming-soon-in-ember-octane-part-5-glimmer-components/)
+- [Native Classes (+Decorators)](/blog/coming-soon-in-ember-octane-part-1-native-classes)
+- [Angle Brackets & Named Arguments](/blog/coming-soon-in-ember-octane-part-2-angle-brackets-and-named-arguments)
+- [Tracked Properties](/blog/coming-soon-in-ember-octane-part-3-tracked-properties)
+- [Modifiers](/blog/coming-soon-in-ember-octane-part-4-modifiers) _← this post_
+- [Glimmer Components](/blog/coming-soon-in-ember-octane-part-5-glimmer-components)
 
-These aren't _all_ of the new features that will be part of Octane, just the ones that I'm most familiar with personally. This series is aimed at existing Ember users, but if you're new to Ember or tried Ember a while ago and want to see how things are changing, I'll be providing context on the existing features as we go along. These posts won't be doing deep dives on all the edge cases of the functionality, they are moreso meant as an overview of what's coming. If you're curious about what an _edition_ is exactly, you can check out a quick break down in [the first post in the series](https://www.pzuraq.com/coming-soon-in-ember-octane-part-1-native-classes/#whatareeditions).
+These aren't _all_ of the new features that will be part of Octane, just the ones that I'm most familiar with personally. This series is aimed at existing Ember users, but if you're new to Ember or tried Ember a while ago and want to see how things are changing, I'll be providing context on the existing features as we go along. These posts won't be doing deep dives on all the edge cases of the functionality, they are moreso meant as an overview of what's coming. If you're curious about what an _edition_ is exactly, you can check out a quick break down in [the first post in the series](/blog/coming-soon-in-ember-octane-part-1-native-classes#what-are-editions).
 
 Alright, now let's talk about modifiers, Ember's new tool for working with the DOM!
 
@@ -20,7 +20,7 @@ Alright, now let's talk about modifiers, Ember's new tool for working with the D
 Modifiers are similar to Handlebars helpers, they are functions or classes that can be used in templates directly using `{{double-curlies}}`. The major difference with modifiers is that they are applied directly to _elements_:
 
 ```handlebars
-<button {{on "click" this.handleClick}}>
+<button {{on 'click' this.handleClick}}>
   Hello, World!
 </button>
 ```
@@ -51,7 +51,7 @@ There are a few reasons modifiers end up being a better solution for DOM manipul
    <button>Hello, World!</button>
 
    {{#if this.showTutorial}}
-     <span class="tooltip">Click the button!</span>
+     <span class='tooltip'>Click the button!</span>
    {{/if}}
    ```
 
@@ -72,12 +72,12 @@ There are a few reasons modifiers end up being a better solution for DOM manipul
    We _could_ create new components instead, and this may make sense at times - for instance, the tooltip logic is something we'd likely want to reuse across the app. But in many cases, like our "Hello, world!" button, this would be a pretty heavy-handed solution, with a lot of boilerplate being generated for a very small amount of functionality. Compare this to modifiers, which can be applied directly to the elements that they operate on:
 
    ```handlebars
-   <button {{on "click" this.handleClick}}>
+   <button {{on 'click' this.handleClick}}>
      Hello, World!
    </button>
 
    {{#if this.showTutorial}}
-     <span class="tooltip" {{on "mouseover" this.toggleTooltip}}>
+     <span class='tooltip' {{on 'mouseover' this.toggleTooltip}}>
        Click the button!
      </span>
    {{/if}}
@@ -94,26 +94,18 @@ There are a few reasons modifiers end up being a better solution for DOM manipul
        this._tooltip = this.element.querySelector('.tooltip');
 
        if (this._tooltip) {
-         this._tooltip.addEventListener(
-           'mouseover',
-           this.toggleTooltip
-         );
+         this._tooltip.addEventListener('mouseover', this.toggleTooltip);
        }
      }
 
      removeTooltipListener() {
        if (this._tooltip) {
-         this._tooltip.removeEventListener(
-           'mouseover',
-           this.toggleTooltip
-         );
+         this._tooltip.removeEventListener('mouseover', this.toggleTooltip);
        }
      }
 
      didInsertElement() {
-       this.element
-         .querySelector('button')
-         .addEventListener('click', this.handleClick);
+       this.element.querySelector('button').addEventListener('click', this.handleClick);
 
        this.addTooltipListener();
      }
@@ -124,9 +116,7 @@ There are a few reasons modifiers end up being a better solution for DOM manipul
      }
 
      willDestroyElement() {
-       this.element
-         .querySelector('button')
-         .removeEventListener('click', this.handleClick);
+       this.element.querySelector('button').removeEventListener('click', this.handleClick);
 
        this.removeTooltipListener();
      }
@@ -154,10 +144,7 @@ These benefits are the reasoning behind introducing a new concept. We also aren'
 The usage side of modifiers has been defined since Ember v1. A modifier is the same syntax as a helper, but applied directly to an element instead of to an attribute:
 
 ```handlebars
-<div
-  {{my-modifier 'hello' 'world!'}}
-  role={{my-helper 'some' 'value'}}
-></div>
+<div {{my-modifier 'hello' 'world!'}} role={{my-helper 'some' 'value'}}></div>
 ```
 
 Notably, there is an `{{action}}` helper and an `{{action}}` modifier, which is why it appears like the action helper can be used in both places:
@@ -224,10 +211,7 @@ User defined modifiers haven't been finalized just yet. Instead, Ember has creat
      }
    }
 
-   export default modifier(
-     { services: ['userSettings'] },
-     darkMode
-   );
+   export default modifier({ services: ['userSettings'] }, darkMode);
    ```
 
    ```handlebars
@@ -376,10 +360,7 @@ You'll notice that I've omitted some of the implementation details of the compon
 
 ```js
 // /addon/modifiers/if.js
-function _if(
-  element,
-  [conditional, modifier, ...rest],
-  named) {
+function _if(element, [conditional, modifier, ...rest], named) {
   if (Boolean(conditional)) {
     return modifier(element, rest, named);
   }
@@ -401,11 +382,7 @@ const HAMMER_DIRECTION = {
   // remaining directions...
 };
 
-function hammer(element, positional, {
-  recognizers = [],
-  options = {},
-  ...events
-}) {
+function hammer(element, positional, { recognizers = [], options = {}, ...events }) {
   let hammer = new Hammer.Manager(element, options);
 
   for (let { type, direction, ...rest } of recognizers) {
@@ -461,23 +438,19 @@ export default class PaperToastInner extends Component.extend(TransitionMixin) {
 
 ```handlebars
 <md-toast
-  {{if @swipeToClose hammer
-
+  {{if
+    @swipeToClose
+    hammer
     panstart=this.dragStart
     panmove=this.drag
     panend=this.dragEnd
     swiperight=this.dragEnd
     swipeleft=this.dragEnd
-
     recognizers=(arr
-      (hash type="swipe" direction="all" threshold=10)
-      (hash type="pan" direction="all" threshold=10)
+      (hash type='swipe' direction='all' threshold=10)
+      (hash type='pan' direction='all' threshold=10)
     )
-
-    options=(hash
-      dragLockToAxis=true
-      dragBlockHorizontal=true
-    )
+    options=(hash dragLockToAxis=true dragBlockHorizontal=true)
   }}
 >
   ...
@@ -509,8 +482,9 @@ export default modifier((element, positional, named) => {
 
 ```handlebars
 <md-toast
-  {{if @swipeToClose horizontalSwipe
-
+  {{if
+    @swipeToClose
+    horizontalSwipe
     panstart=this.dragStart
     panmove=this.drag
     panend=this.dragEnd

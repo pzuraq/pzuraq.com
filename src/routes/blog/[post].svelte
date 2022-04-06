@@ -40,7 +40,7 @@
 
 <h1 class="text-center">{title}</h1>
 
-<span class="text-secondary font-cursive relative block text-center text-sm md:hidden -my-2">
+<span class="text-secondary font-cursive relative block text-center text-sm md:hidden -mb-2 -mt-1">
   {published}
 </span>
 

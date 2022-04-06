@@ -5,13 +5,13 @@ tagline: ''
 
 Hello again, and welcome back! This is the third entry in the multipart _Coming Soon in Ember Octane_ series, where we're previewing some of the various features that are landing in Ember's upcoming Octane edition, including:
 
-- [Native Classes (+Decorators)](https://www.pzuraq.com/coming-soon-in-ember-octane-part-1-native-classes/)
-- [Angle Brackets & Named Arguments](https://www.pzuraq.com/coming-soon-in-ember-octane-part-2-angle-brackets-and-named-arguments/)
-- [Tracked Properties](https://www.pzuraq.com/coming-soon-in-ember-octane-part-3-tracked-properties/) _← this post_
-- [Modifiers](https://www.pzuraq.com/coming-soon-in-ember-octane-part-4-modifiers/)
-- [Glimmer Components](https://www.pzuraq.com/coming-soon-in-ember-octane-part-5-glimmer-components/)
+- [Native Classes (+Decorators)](/blog/coming-soon-in-ember-octane-part-1-native-classes)
+- [Angle Brackets & Named Arguments](/blog/coming-soon-in-ember-octane-part-2-angle-brackets-and-named-arguments)
+- [Tracked Properties](/blog/coming-soon-in-ember-octane-part-3-tracked-properties) _← this post_
+- [Modifiers](/blog/coming-soon-in-ember-octane-part-4-modifiers)
+- [Glimmer Components](/blog/coming-soon-in-ember-octane-part-5-glimmer-components)
 
-These aren't _all_ of the new features that will be part of Octane, just the ones that I'm most familiar with personally. This series is aimed at existing Ember users, but if you're new to Ember or tried Ember a while ago and want to see how things are changing, I'll be providing context on the existing features as we go along. These posts won't be doing deep dives on all the edge cases of the functionality, they are moreso meant as an overview of what's coming. If you're curious about what an _edition_ is exactly, you can check out a quick break down in [the first post in the series](https://www.pzuraq.com/coming-soon-in-ember-octane-part-1-native-classes/#whatareeditions).
+These aren't _all_ of the new features that will be part of Octane, just the ones that I'm most familiar with personally. This series is aimed at existing Ember users, but if you're new to Ember or tried Ember a while ago and want to see how things are changing, I'll be providing context on the existing features as we go along. These posts won't be doing deep dives on all the edge cases of the functionality, they are moreso meant as an overview of what's coming. If you're curious about what an _edition_ is exactly, you can check out a quick break down in [the first post in the series](/blog/coming-soon-in-ember-octane-part-1-native-classes#what-are-editions).
 
 On to tracked properties!
 

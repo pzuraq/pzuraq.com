@@ -13,7 +13,7 @@ My name is Chris and I work on the web. Some things I am and have been
 - Champion for adding [Decorators](https://github.com/tc39/proposal-decorators) to JavaScript
 - Lead frontend engineer at [Bitski](https://www.bitski.com/)
 - [Ember.js](https://emberjs.com/) core team member
-- Former frontend engineer at [LinkedIn](linkedin.com), [Addepar](https://addepar.com/),
+- Former frontend engineer at [LinkedIn](https://linkedin.com), [Addepar](https://addepar.com/),
   Ticketfly (now [EventBrite](https://www.eventbrite.com/))
 - Maintainer of far too many NPM packages
 
@@ -32,8 +32,8 @@ If you want to get in touch, you can DM me on [Matrix](https://matrix.to/#/@pzur
 
 ---
 
-This site is built using SvelteKit and TailwindCSS, and hosted on Cloudflare Pages.
+This site is built using SvelteKit, TailwindCSS, and Google Fonts. It is hosted with Cloudflare Pages.
 
-I use a single cookie for tracking your theme preference, so the site can render correctly on
-the server. I don't use any other tracking or analytics, other than the basic pageviews/unique
+I use `localStorage` to track your theme preference, but otherwise I don't store any
+information or use any tracking or analytics software, other than the basic pageviews/unique
 visitor counts from Cloudflare.

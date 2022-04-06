@@ -5,9 +5,9 @@ tagline: ''
 
 This blog post is the third in a series on _autotracking_, the new reactivity system in Ember.js. I also discuss the concept of reactivity in general, and how it manifests in JavaScript.
 
-1. [What Is Reactivity?](https://www.pzuraq.com/what-is-reactivity/)
-2. [What Makes a Good Reactive System?](https://www.pzuraq.com/what-makes-a-good-reactive-system/)
-3. How Autotracking Works _← This post_
+1. [What Is Reactivity?](what-is-reactivity/)
+2. [What Makes a Good Reactive System?](what-makes-a-good-reactive-system/)
+3. [How Autotracking Works](/blog/how-autotracking-works/) _← This post_
 
 In the previous blog post, we discussed a number of reactivity models and extracted a few principles for designing reactive systems:
 
@@ -198,11 +198,11 @@ let CURRENT_REVISION: number = 0;
 
 Another way to think of this is as a global "clock". Except rather than counting _time_, it counts _changes_. Whenever something changes in the application, the we increase the clock's value by 1.
 
-![](/assets/blog/how-autotracking-works-2.png)
+![Clock is incremented from 0 to 1 when something changes](/assets/blog/how-autotracking-works-2.png)
 
 So, each value of the clock represents a _version_ of state that the application was in. We were in version 0 at one point, the initial state of the app. Then we changed something, creating _version 1_ of the state. By incrementing the clock, we are tracking the current version of state.
 
-![](/assets/blog/how-autotracking-works-3.png)
+![Timeline of clock versions as state changes](/assets/blog/how-autotracking-works-3.png)
 
 We can use a clock like this to check for very simple changes. Is the number greater than it was last time we looked? Yes? Alright, something is different, we need to update! But this doesn't help us with our memoization problem. We don't want our memoized functions to rerun whenever the clock changes, because it could have changed for completely unrelated state. We only want to rerun whenever tracked state _within_ the function has changed. For that, we need _tags_.
 
@@ -214,27 +214,27 @@ Tags take their name from [HTTP ETags](https://en.wikipedia.org/wiki/HTTP_ETag),
 
 Tags have a single value, which is a version from the clock. Whenenever we modify the state that tag represents, we dirty the tag. To do this, we increase the value of the clock, and then we assign its new value to the tag.
 
-![](/assets/blog/how-autotracking-works-4.png)
+![Assigning value of clock to tag](/assets/blog/how-autotracking-works-4.png)
 
 So the tag essentially stores the _last version_ that this state was updated at. Following the clock metaphor, this was the last point in _time_ the state was updated.
 
 Now for the memoization. As we run our program the first time, and we use every piece of state, we we collect these tags, and save them along with the result of the computation. This is called tag _consumption_.
 
-![](/assets/blog/how-autotracking-works-5.png)
+![Mapping from state to tags](/assets/blog/how-autotracking-works-5.png)
 
 We also save the current _maximum version_ of all of the tags we've collected. This represents the most recent version for all of the state we accessed. Nothing has been modified within this computation _since_ that version.
 
-![](/assets/blog/how-autotracking-works-6.png)
+![Max version of tags](/assets/blog/how-autotracking-works-6.png)
 
 The next time we come back to this computation, we get the maximum version of all the tags again. If any one of them has been dirtied, it will be the _most_ recent version of state. And that version will _necessarily_ be higher than the maximum possible value last time we checked.
 
-![](/assets/blog/how-autotracking-works-7.png)
+![Diff in max version](/assets/blog/how-autotracking-works-7.png)
 
 So, if the value is higher, then we know that something has changed! We rerun the computation and get the new result.
 
 We can also look at the opposite case - what happens when we update state _elsewhere_ in the application. Like before, we bump the global clock and assign its value to the tag that was updated.
 
-![](/assets/blog/how-autotracking-works-8.png)
+![State updated elsewhere](/assets/blog/how-autotracking-works-8.png)
 
 But when we go to check if our memoized function needs to rerun, since we are only checking the values of the tags that were _used_ within it, they will return the same maximum as last time. So our function _only_ reruns when it should, unrelated changes will not affect it.
 

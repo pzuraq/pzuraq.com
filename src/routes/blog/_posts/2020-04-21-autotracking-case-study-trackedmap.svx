@@ -1,37 +1,27 @@
 ---
-title: "Autotracking Case Study - TrackedMap"
-tagline: ""
+title: 'Autotracking Case Study - TrackedMap'
+tagline: ''
 ---
 
 This blog post is my fourth post in a series on autotracking, the new reactivity system in Ember.js. The previous three posts dug into the details of _how_ autotracking works.
 
-1. [What Is Reactivity?](https://www.pzuraq.com/what-is-reactivity/)
-2. [What Makes a Good Reactive System?](https://www.pzuraq.com/what-makes-a-good-reactive-system/)
-3. [How Autotracking Works](https://www.pzuraq.com/how-autotracking-works/)
+1. [What Is Reactivity?](/blog/what-is-reactivity/)
+2. [What Makes a Good Reactive System?](/blog/what-makes-a-good-reactive-system/)
+3. [How Autotracking Works](/blog/how-autotracking-works/)
 
-The upcoming posts in this series, by contrast, are going to be less theory oriented. Instead, we'll be examining how you can _use_ autotracking in practice. Pull-based
+This post, by contrast, is going to be less theory oriented. Instead, we'll be examining how you can _use_ autotracking in practice. Pull-based
 reactivity can be somewhat counterintuitive to work with when you’re used to push-based reactivity, because it often requires a different way of approaching various
-problems. With that in mind, I have a number of case studies lined up to dig into, with the goal of demonstrating some intermediate and advanced autotracking techniques.
-
-1. TrackedMap _← This post_
-2. @localCopy
-3. @cached
-4. RemoteData
-5. Effect
-
-This list will likely grow over time, and suggestions and ideas are always welcome! By the end of this series, I'd like to have a comprehensive set of examples that developers can learn from that covers as many use cases as possible.
-
-So, let's get started!
+problems. This post will be a case study on how we can create a data structure which applies that theory: `TrackedMap`.
 
 ### Terminology
 
 A quick recap on some autotracking terminology. I used these terms loosely in previous posts, but now I want to define them more thoroughly so they can be used to describe the dynamics of what we're doing with autotracking:
 
-* **Tracked value**: A value that will, when consumed, entangle with any active tracked computations, and when updated, invalidate those computations.
-* **Tracked/memoized compututation**: A computation whose output is connected to any tracked values that were consumed during its runtime. It will only rerun if any of these values updates, otherwise it will return the previously computed value.
-* **Entanglement**: The act of linking a tracked value to a tracked computation.
-* **Consume**: To track a value, so that any state derived from the value will update the next time the value is updated.
-* **Dirty**: To update a value, so that any state derived from it is dirtied and will update the next time it is accessed.
+- **Tracked value**: A value that will, when consumed, entangle with any active tracked computations, and when updated, invalidate those computations.
+- **Tracked/memoized compututation**: A computation whose output is connected to any tracked values that were consumed during its runtime. It will only rerun if any of these values updates, otherwise it will return the previously computed value.
+- **Entanglement**: The act of linking a tracked value to a tracked computation.
+- **Consume**: To track a value, so that any state derived from the value will update the next time the value is updated.
+- **Dirty**: To update a value, so that any state derived from it is dirtied and will update the next time it is accessed.
 
 ## What is TrackedMap?
 
@@ -56,8 +46,7 @@ export default class Profile extends Component {
   // or update a skill in the `skills` property,
   // `expertSkills` will update.
   get expertSkills() {
-    return Array.from(this.skills)
-      .filter(([skill, level]) => level === 'Expert');
+    return Array.from(this.skills).filter(([skill, level]) => level === 'Expert');
   }
 }
 ```
@@ -109,8 +98,9 @@ export default class Parent extends Component {
   }
 }
 ```
+
 ```hbs
-{{!-- components/parent.hbs --}}
+{{! components/parent.hbs }}
 <Child @map={{this.map}} @onSave={{this.updateMap}} />
 ```
 
@@ -146,7 +136,6 @@ This is the danger that comes with attempting to sidestep autotracking. After wo
     There is an issue with Immer.js usage in Ember today, but it’s totally unrelated to autotracking and isn’t broken in Glimmer, and will be fixed Soon™ in Ember. See <a href="https://github.com/emberjs/ember.js/issues/18769">this issue</a> for more details.
   </p>
 </aside>
-
 
 ### Is this Ember.Array 2.0?
 
@@ -255,32 +244,33 @@ Let's walk through how this works:
 
 Awesome, this is a pretty good first pass! But there are a number of other APIs we need to address. `Map` has the following methods:
 
-* `clear`
-* `delete`
-* `entries`
-* `forEach`
-* `get`
-* `has`
-* `keys`
-* `set`
-* `values`
-* `Symbol.iterator`
+- `clear`
+- `delete`
+- `entries`
+- `forEach`
+- `get`
+- `has`
+- `keys`
+- `set`
+- `values`
+- `Symbol.iterator`
 
 The first thing to notice is that we can divide these methods into two categories, methods that operate on a _single_ entry in the map, and methods that operate on _every_ entry, or the _whole collection_.
 
-* Single Entry Methods
-  * `delete`
-  * `get`
-  * `has`
-  * `set`
+- Single Entry Methods
 
-* Whole Collection Methods
-  * `clear`
-  * `entries`
-  * `forEach`
-  * `keys`
-  * `values`
-  * `Symbol.iterator`
+  - `delete`
+  - `get`
+  - `has`
+  - `set`
+
+- Whole Collection Methods
+  - `clear`
+  - `entries`
+  - `forEach`
+  - `keys`
+  - `values`
+  - `Symbol.iterator`
 
 This is critical, because we can make a very important performance optimization here for whole collection methods, but we'll get back to that in a moment. Let's make sure that we have all the single entry methods finished first.
 

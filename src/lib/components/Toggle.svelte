@@ -11,7 +11,7 @@
   const id = uuid++;
 </script>
 
-<label class="toggle" for="toggle-{id}">
+<label class="toggle text-lg md:text-base" for="toggle-{id}">
   <input
     class="toggle__input"
     {checked}
@@ -32,9 +32,8 @@
     --toggle-foreground: theme('colors.midnight.800');
     --toggle-background: theme('colors.midnight.600');
   }
-
   .toggle {
-    --width: 3rem;
+    --width: 3em;
     --height: calc(var(--width) / 2);
     --border-radius: calc(var(--height) / 2);
 
@@ -50,8 +49,8 @@
     image-rendering: pixelated;
     background-image: url('/assets/sun.svg'), url('/assets/moon.svg');
     background-repeat: no-repeat, no-repeat;
-    background-position: top 0.3rem right 0.45rem, top 0.37rem left 0.5rem;
-    background-size: 0.75em, 0.7em;
+    background-position: top 0.3em right 0.4em, top 0.385em left 0.5em;
+    background-size: 0.85em, 0.75em;
     background-color: var(--toggle-background);
     position: relative;
     width: var(--width);

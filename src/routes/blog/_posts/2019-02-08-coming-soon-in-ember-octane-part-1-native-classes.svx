@@ -1,15 +1,15 @@
 ---
-title: "Coming Soon in Ember Octane: Native(nbsp)Classes"
-tagline: ""
+title: 'Coming Soon in Ember Octane: Native(nbsp)Classes'
+tagline: ''
 ---
 
 If you've been paying attention in Ember lately you may have heard the term "Octane" floating around here and there recently, and wondered what all the excitement was about. It may seem like a bit of a big deal - and that's because it kind of is! It's Ember's first new _edition_, proposed in the [Ember 2018 Roadmap](https://github.com/emberjs/rfcs/blob/master/text/0364-roadmap-2018.md), and represents a major shift in the mental model behind Ember.js and Ember applications. In this series, I'll be diving into some of the new features that are part of Octane (specifically the ones that are part of the _browser_ side of the framework) and giving a brief overview of how the feature works, and why the feature is being added. The features I'm planning on discussing are:
 
-* [Native Classes (+Decorators)](https://www.pzuraq.com/coming-soon-in-ember-octane-part-1-native-classes/) _← this post_
-* [Angle Brackets & Named Arguments](https://www.pzuraq.com/coming-soon-in-ember-octane-part-2-angle-brackets-and-named-arguments/)
-* [Tracked Properties](https://www.pzuraq.com/coming-soon-in-ember-octane-part-3-tracked-properties/)
-* [Modifiers](https://www.pzuraq.com/coming-soon-in-ember-octane-part-4-modifiers/)
-* [Glimmer Components](https://www.pzuraq.com/coming-soon-in-ember-octane-part-5-glimmer-components/)
+- [Native Classes (+Decorators)](/blog/coming-soon-in-ember-octane-part-1-native-classes/) _← this post_
+- [Angle Brackets & Named Arguments](/blog/coming-soon-in-ember-octane-part-2-angle-brackets-and-named-arguments/)
+- [Tracked Properties](/blog/coming-soon-in-ember-octane-part-3-tracked-properties/)
+- [Modifiers](/blog/coming-soon-in-ember-octane-part-4-modifiers/)
+- [Glimmer Components](/blog/coming-soon-in-ember-octane-part-5-glimmer-components/)
 
 There _are_ more features that are part of Octane, such as Ember's new file system layout (also known as Module Unification), template imports, and other build improvements, but these are a bit out of my scope - I've personally been focused on the story for developers in the browser, writing app and addon code, and how that's going to change.
 
@@ -55,11 +55,11 @@ var Person = Ember.Object.extend({
   firstName: 'Steve',
   lastName: 'Rogers',
 
-  fullName: function() {
+  fullName: function () {
     return this.get('firstName') + ' ' + this.get('lastName');
   }.property('firstName', 'lastName'),
 
-  updateName: function(firstName, lastName) {
+  updateName: function (firstName, lastName) {
     this.set('firstName', firstName);
     this.set('lastName', lastName);
   },
@@ -75,7 +75,7 @@ const Person = EmberObject.extend({
   firstName: 'Steve',
   lastName: 'Rogers',
 
-  fullName: computed('firstName', 'lastName', function() {
+  fullName: computed('firstName', 'lastName', function () {
     return `${this.firstName} ${this.lastName}`;
   }),
 
@@ -154,7 +154,7 @@ const ClassicClassPerson = EmberObject.extend({
   firstName: 'Steve',
   lastName: 'Rogers',
 
-  fullName: computed('firstName', 'lastName', function() {
+  fullName: computed('firstName', 'lastName', function () {
     return `${this.firstName} ${this.lastName}`;
   }),
 
@@ -278,20 +278,16 @@ export default Component.extend({
 
   codeSearch: service(),
 
-  visibleUsages: computed('visibleUsageCount', 'usages', function() {
+  visibleUsages: computed('visibleUsageCount', 'usages', function () {
     return this.usages.slice(0, this.visibleUsageCount);
   }),
 
-  moreUsages: computed('visibleUsageCount', 'usages', function() {
+  moreUsages: computed('visibleUsageCount', 'usages', function () {
     return this.visibleUsageCount < this.usages.length;
   }),
 
-  fetchUsages: task(function*() {
-    let usages = yield this.codeSearch.usages.perform(
-      this.addon.id,
-      this.query,
-      this.regex
-    );
+  fetchUsages: task(function* () {
+    let usages = yield this.codeSearch.usages.perform(this.addon.id, this.query, this.regex);
     this.set('usages', filterByFilePath(usages, this.fileFilter));
   }).drop(),
 
@@ -319,7 +315,7 @@ function filterByFilePath(usages, filterTerm) {
   } catch (e) {
     return [];
   }
-  return usages.filter(usage => {
+  return usages.filter((usage) => {
     return usage.filename.match(filterRegex);
   });
 }
@@ -355,11 +351,7 @@ export default class AddonSourceUsagesComponent extends Component {
 
   @dropTask
   *fetchUsages() {
-    let usages = yield this.codeSearch.usages.perform(
-      this.addon.id,
-      this.query,
-      this.regex
-    );
+    let usages = yield this.codeSearch.usages.perform(this.addon.id, this.query, this.regex);
     this.set('usages', filterByFilePath(usages, this.fileFilter));
   }
 
@@ -387,7 +379,7 @@ function filterByFilePath(usages, filterTerm) {
   } catch (e) {
     return [];
   }
-  return usages.filter(usage => {
+  return usages.filter((usage) => {
     return usage.filename.match(filterRegex);
   });
 }
@@ -431,7 +423,7 @@ class Person {
 let person = new Person('Jessica', 'Jones');
 
 console.log(person.fullName); // 'Jessica Jones'
-console.log(person.#firstName) // ERROR
+console.log(person.#firstName); // ERROR
 ```
 
 #### Fewer bugs and quirks
