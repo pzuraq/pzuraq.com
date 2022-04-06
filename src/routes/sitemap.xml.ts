@@ -24,17 +24,17 @@ const sitemap = (posts) => `<?xml version="1.0" encoding="UTF-8" ?>
   xmlns:video="https://www.google.com/schemas/sitemap-video/1.1"
 >
   <url>
-    <loc>https://www.pzuraq.com</loc>
+    <loc>https://pzuraq.com</loc>
     <changefreq>daily</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://www.pzuraq.com/favs</loc>
+    <loc>https://pzuraq.com/favs</loc>
     <changefreq>daily</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://www.pzuraq.com/about</loc>
+    <loc>https://pzuraq.com/about</loc>
     <changefreq>daily</changefreq>
     <priority>0.7</priority>
   </url>
@@ -42,7 +42,7 @@ const sitemap = (posts) => `<?xml version="1.0" encoding="UTF-8" ?>
     .map(
       (post) => `
   <url>
-    <loc>https://www.pzuraq.com/blog/${post.slug}</loc>
+    <loc>https://pzuraq.com/blog/${post.slug}</loc>
     <changefreq>daily</changefreq>
     <priority>0.7</priority>
   </url>
