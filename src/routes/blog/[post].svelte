@@ -25,7 +25,6 @@
 </script>
 
 <script lang="ts">
-  import BlogLayout from '$lib/components/BlogLayout.svelte';
   import { formatTitle, formatPublishDate } from '$lib/format';
 
   export let component: SvelteComponent;
@@ -35,17 +34,19 @@
   let published = formatPublishDate(metadata.published);
 </script>
 
-<span class="text-secondary font-cursive relative md:-top-8">
+<span class="text-secondary font-cursive relative -top-8 md:inline hidden">
   {published}
 </span>
 
 <h1 class="text-center">{title}</h1>
 
+<span class="text-secondary font-cursive relative block text-center text-sm md:hidden -my-2">
+  {published}
+</span>
+
 <hr />
 
-<BlogLayout>
-  <svelte:component this={component} />
-</BlogLayout>
+<svelte:component this={component} />
 
 <hr />
 

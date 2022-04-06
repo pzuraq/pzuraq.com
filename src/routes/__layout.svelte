@@ -7,6 +7,8 @@
 
   import { session } from '$app/stores';
   import { browser } from '$app/env';
+  import { afterNavigate } from '$app/navigation';
+  import SocialLinks from '$lib/components/SocialLinks.svelte';
 
   if (browser) {
     const prefersTheme = window.matchMedia('(prefers-color-scheme: dark)').matches
@@ -21,13 +23,13 @@
 
   let menuOpen = false;
 
-  function handleGlobalShortcut(e: KeyboardEvent) {
+  const handleGlobalShortcut = (e: KeyboardEvent) => {
     if (e.code === 'KeyD' && e.ctrlKey && e.altKey) {
       toggleTheme();
     }
-  }
+  };
 
-  function toggleTheme() {
+  const toggleTheme = () => {
     let { theme, prefersTheme } = $session;
 
     if (theme === 'system') {
@@ -40,7 +42,11 @@
 
     Cookies.set('theme', theme, { secure: true, sameSite: 'Strict' });
     session.set({ ...$session, theme });
-  }
+  };
+
+  let scrollContainer: Element;
+
+  afterNavigate(() => scrollContainer.scrollTo(0, 0));
 
   $: isDark =
     $session.theme === 'dark' || ($session.theme === 'system' && $session.prefersTheme === 'dark');
@@ -48,24 +54,35 @@
 
 <svelte:window on:keyup={handleGlobalShortcut} />
 
-<div class="{$session.theme} text-lg text-primary bg-inverse h-screen overflow-scroll">
+<div
+  bind:this={scrollContainer}
+  class="{$session.theme} md:text-lg text-primary bg-inverse h-screen overflow-scroll"
+>
   <nav
     class="w-full p-4 md:p-8 md:pr-0 2xl:w-80 lg:w-64 md:w-36 md:fixed md:h-screen font-cursive text-center flex flex-col-reverse md:flex-col overflow-y-scroll"
   >
-    <div class="-my-6 md:my-0">
-      <img src="/store-day.png" alt="A peaceful little bookstore" class="w-full only-light" />
-      <img src="/store-night.png" alt="A peaceful little bookstore" class="w-full only-dark" />
+    <div class="-mt-8 -mb-4 mx-4 md:m-0">
+      <img
+        src="/assets/store-day.png"
+        alt="A peaceful little bookstore"
+        class="w-full only-light"
+      />
+      <img
+        src="/assets/store-night.png"
+        alt="A peaceful little bookstore"
+        class="w-full only-dark"
+      />
     </div>
 
-    <div class="md:block flex-grow" class:hidden={!menuOpen}>
-      <a sveltekit:prefetch href="/" class="2xl:text-4xl text-4xl"> pzuraq </a>
+    <div class="flex-grow -mt-10 md:mt-0">
+      <a sveltekit:prefetch href="/" class="md:text-4xl text-3xl"> pzuraq </a>
       <br />
       <a
         href="http://ipa-reader.xyz/?text=z%C9%99-r%C3%A4k&voice=Joanna"
         class="2xl:text-xl text-lg hover:text-ochre-500">/zə-räk/</a
       >
 
-      <div class="flex flex-col justify-center mt-4 items-center">
+      <div class="flex md:flex flex-col justify-center mt-4 items-center" class:hidden={!menuOpen}>
         <NavLink href="/" match={/^\/(blog\/.*)?$/} className="main-nav-link">
           <div class="square" />
           blog
@@ -81,20 +98,10 @@
       </div>
     </div>
 
-    <div class="text-center hidden md:block pt-8 text-secondary">
-      <a href="https://twitter.com/pzuraq" class="hover:text-primary">
-        <i class="icon-twitter mx-2" />
-      </a>
-      <a href="https://github.com/pzuraq" class="hover:text-primary">
-        <i class="icon-github mx-2" />
-      </a>
-      <a href="https://matrix.to/#/@pzura:matrix.org" class="hover:text-primary">
-        <i class="icon-matrix mx-2" />
-      </a>
-    </div>
+    <SocialLinks className="pt-8 hidden md:block" />
 
     <div class="md:hidden flex justify-between p-4">
-      <button on:click={() => (menuOpen = !menuOpen)} class="menu-btn">
+      <button on:click={() => (menuOpen = !menuOpen)} aria-label="Toggle menu" class="menu-btn">
         <i class={menuOpen ? 'icon-close' : 'icon-menu'} />
       </button>
 
@@ -102,23 +109,13 @@
     </div>
   </nav>
 
-  <div class="md:ml-36 lg:ml-64 xl:mr-48 2xl:mx-80 p-8 md:py-8 md:px-12 lg:px-20">
+  <div class="md:ml-36 lg:ml-64 xl:mr-48 2xl:mx-80 px-8 pb-8 md:py-8 md:px-12 lg:px-20">
     <div class="max-w-2xl 2xl:max-w-3xl m-auto">
       <div class="text-right hidden md:block">
         <Toggle checked={isDark} on:change={toggleTheme} />
       </div>
       <slot />
-      <div class="p-8 text-center text-secondary md:hidden">
-        <a href="https://twitter.com/pzuraq" class="hover:text-primary">
-          <i class="icon-twitter mx-2" />
-        </a>
-        <a href="https://github.com/pzuraq" class="hover:text-primary">
-          <i class="icon-github mx-2" />
-        </a>
-        <a href="https://matrix.to/#/@pzura:matrix.org" class="hover:text-primary">
-          <i class="icon-matrix mx-2" />
-        </a>
-      </div>
+      <SocialLinks className="p-8 md:hidden" />
     </div>
   </div>
 </div>
@@ -160,6 +157,8 @@
   }
 
   img {
+    aspect-ratio: 1;
+
     image-rendering: optimizeSpeed; /* STOP SMOOTHING, GIVE ME SPEED  */
     image-rendering: -moz-crisp-edges; /* Firefox                        */
     image-rendering: -o-crisp-edges; /* Opera                          */

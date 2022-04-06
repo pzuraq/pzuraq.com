@@ -10,7 +10,8 @@ export const formatPublishDate = (date: string): string => {
   });
 };
 
-const COFFEE_HTML = '<img src="/coffee.svg" class="h-4 w-4 inline-block -mt-1.5" />';
+const COFFEE_HTML =
+  '<img src="/assets/coffee.svg" aria-hidden="true" class="h-4 w-4 inline-block -mt-1.5" />';
 
 export const formatReadingTime = (readingTime: number): string => {
   let coffees;

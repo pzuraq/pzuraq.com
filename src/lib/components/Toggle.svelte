@@ -1,17 +1,22 @@
+<script lang="ts" context="module">
+  let uuid = 0;
+</script>
+
 <script lang="ts">
   import { createEventDispatcher } from 'svelte';
 
   export let checked: boolean;
 
   const dispatch = createEventDispatcher<{ change: boolean }>();
+  const id = uuid++;
 </script>
 
-<label class="toggle" for="myToggle">
+<label class="toggle" for="toggle-{id}">
   <input
     class="toggle__input"
     {checked}
     type="checkbox"
-    id="myToggle"
+    id="toggle-{id}"
     on:change={() => dispatch('change', !checked)}
   />
   <div class="toggle__fill" />
@@ -43,7 +48,7 @@
 
   .toggle__fill {
     image-rendering: pixelated;
-    background-image: url('/sun.svg'), url('/moon.svg');
+    background-image: url('/assets/sun.svg'), url('/assets/moon.svg');
     background-repeat: no-repeat, no-repeat;
     background-position: top 0.3rem right 0.45rem, top 0.37rem left 0.5rem;
     background-size: 0.75em, 0.7em;

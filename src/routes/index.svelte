@@ -3,6 +3,10 @@
   import POST_META from '$virtual/post-meta.json';
 </script>
 
+<svelte:head>
+  <title>pzuraq | blog</title>
+</svelte:head>
+
 <h1 class="text-secondary text-base">A blog about (mostly) computery things</h1>
 
 <hr />
