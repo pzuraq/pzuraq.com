@@ -50,4 +50,6 @@
 
 <hr />
 
-<a href="/"> read some more </a>
+<div class="text-center text-link pt-8 pb-12">
+  <a href="/"> read some more </a>
+</div>
