@@ -29,10 +29,10 @@
  */
 
 @mixin light {
-  --code-border: theme('colors.stone.200');
+  --code-border: theme('colors.bone.200');
   --code-inline-color: theme('colors.indigo.500');
   --code-syntax-fg: theme('colors.stone.700');
-  --code-syntax-bg: theme('colors.stone.50');
+  --code-syntax-bg: theme('colors.bone.100');
 
   --code-keyword-color: theme('colors.plum.500');
 

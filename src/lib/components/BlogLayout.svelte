@@ -18,7 +18,7 @@
   <meta property="og:image" content="https://www.pzuraq.com/assets/og-image.png" />
   <meta property="og:description" content={tagline || 'A blog about (mostly) computery things'} />
 
-  <meta name="twitter:image" content="https://www.pzuraq.com/assets/twitter-image.png" />
+  <meta name="twitter:image" content="https://www.pzuraq.com/assets/og-image.png" />
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:site" content="@pzuraq" />
   <meta name="twitter:creator" content="@pzuraq" />

@@ -20,7 +20,9 @@ module.exports = {
         150: '#EEEDEC',
       },
       bone: {
-        50: '#fffaf0',
+        50: '#fffefd',
+        100: '#fffbf6',
+        150: '#fffaf0',
         200: '#f9edd4',
         500: '#d8cab6',
       },

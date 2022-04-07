@@ -1,8 +1,8 @@
 @mixin light {
   --color-primary: theme('colors.stone.700');
   --color-secondary: theme('colors.stone.400');
-  --color-inverse: theme('colors.white');
-  --color-inverse-secondary: theme('colors.stone.50');
+  --color-inverse: theme('colors.bone.50');
+  --color-inverse-secondary: theme('colors.bone.150');
 
   .only-light {
     display: initial;
