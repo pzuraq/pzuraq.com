@@ -19,7 +19,7 @@ My name is Chris and I work on the web. Some things I am and have been
 - Maintainer of far too many NPM packages
 
 Outside of work I'm an amateur chef (I make a mean stew), a sci-fi/spec-fic enthusiast (with
-dreams of one day writing my own), a board game connoisseur (maybe one day I'll find a D&D group),
+dreams of one day writing my own), a board game connoisseur (eventually I'll find a D&D group),
 a budding pixel artist (<span title="I can't take full credit, I started with a design from someone on fiverr (@nghuijing), but I did modify it quite a bit to get the final look and feel. The dog was also all me!">as seen in the top left<span class="text-ochre-500">\*</span></span>),
 and a dabbler in exploring the great outdoors (I summitted a mountain once, that was pretty cool).
 
@@ -29,7 +29,8 @@ I firmly believe that black lives matter, gender is fluid (I would know a bit ab
 human beings are valid, and justice is not just unless it's for everyone. My pronouns are
 he/him/they/them. Slava Ukraini.
 
-If you want to get in touch, you can DM me on [Matrix](https://matrix.to/#/@pzura:matrix.org).
+If you want to get in touch, you can DM me on [Twitter](https://twitter.com/pzuraq) or
+[Matrix](https://matrix.to/#/@pzura:matrix.org) (apologies if I take a while to respond, I am perpetually busy).
 
 ---
 
