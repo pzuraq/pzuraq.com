@@ -5,6 +5,16 @@
 
 <svelte:head>
   <title>pzuraq | blog</title>
+
+  <meta property="og:url" content="https://www.pzuraq.com" />
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="pzuraq" />
+  <meta property="og:image" content="https://www.pzuraq.com/assets/nebs.png" />
+  <meta property="og:description" content="A blog about (mostly) computery things" />
+
+  <meta name="twitter:card" content="summary" />
+  <meta name="twitter:site" content="@pzuraq" />
+  <meta name="twitter:creator" content="@pzuraq" />
 </svelte:head>
 
 <h1 class="text-secondary text-base">A blog about (mostly) computery things</h1>

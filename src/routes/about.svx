@@ -1,5 +1,6 @@
 ---
 title: 'about'
+tagline: 'obligatory self-describing blurb'
 ---
 
 <h1 class="text-center text-secondary text-base">

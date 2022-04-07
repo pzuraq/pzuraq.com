@@ -1,5 +1,6 @@
 ---
 title: 'favs'
+tagline: 'things I like and you might too'
 ---
 
 <h1 class="text-secondary text-base">
