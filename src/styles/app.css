@@ -111,9 +111,8 @@ ul > li {
 }
 
 ul > li:before {
-  background: theme('colors.ochre.500');
-  mask-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAcAAAAHCAYAAADEUlfTAAAACXBIWXMAAC4jAAAuIwF4pT92AAAAL0lEQVQImWNkYGD4z4AH4JL8z4RPF1zy////UOo/jM2ArpORkZERUyc2wIjHQQwA/kIOAUEdT7UAAAAASUVORK5CYII=');
-  mask-size: 100% 100%;
+  background-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAcAAAAHCAYAAADEUlfTAAAACXBIWXMAAC4jAAAuIwF4pT92AAAANUlEQVQImWP8sij2PwMOwAKlGbHI/WfCpYuBgYEBLskdu4iBgYHhPxKbAV0nivF4jWXE51oAaSYKByQ4Eh0AAAAASUVORK5CYII=');
+  background-size: 100% 100%;
 
   image-rendering: optimizeSpeed; /* STOP SMOOTHING, GIVE ME SPEED  */
   image-rendering: -moz-crisp-edges; /* Firefox                        */
@@ -127,36 +126,50 @@ ul > li:before {
   position: absolute;
   width: 9px;
   height: 9px;
-  top: 0.45em;
+  top: 0.55em;
   left: -1em;
   transform: rotate(45deg);
 }
 
 ul ul > li:before {
-  display: none;
+  @apply text-ochre-500;
+  background-image: none;
+  transform: none;
+  content: '◆';
+  top: -0.1em;
+  left: -1em;
 }
 
-ul ul {
-  list-style-type: square;
-}
-
-ul ul ul {
-  list-style-type: disc;
+ul ul ul > li:before {
+  @apply text-ochre-500;
+  background-image: none;
+  transform: none;
+  content: '◇';
 }
 
 ol {
-  list-style-type: number;
   margin-left: 2rem;
   margin-top: 1rem;
   margin-bottom: 1rem;
+  counter-reset: item;
 }
 
-ol ol {
-  list-style-type: lower-roman;
+ol li:before {
+  content: counter(item) '.';
+  color: theme('colors.ochre.500');
+  counter-increment: item;
+  position: absolute;
+  text-align: right;
+  transform: translateX(-100%);
+  margin-left: -0.4em;
 }
 
-ol ol ol {
-  list-style-type: upper-alpha;
+ol ol li:before {
+  content: counter(item, lower-roman) '.';
+}
+
+ol ol ol li:before {
+  content: counter(item, lower-alpha) '.';
 }
 
 li {
