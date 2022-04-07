@@ -17,6 +17,15 @@
   .text-link {
     @apply text-ochre-500 hover:text-ochre-300 underline underline-offset-4;
   }
+
+  .pixel {
+    image-rendering: optimizeSpeed; /* STOP SMOOTHING, GIVE ME SPEED  */
+    image-rendering: -moz-crisp-edges; /* Firefox                        */
+    image-rendering: -o-crisp-edges; /* Opera                          */
+    image-rendering: -webkit-optimize-contrast; /* Chrome (and eventually Safari) */
+    image-rendering: pixelated; /* Chrome */
+    image-rendering: optimize-contrast; /* CSS3 Proposed                  */
+  }
 }
 
 html {
@@ -111,16 +120,9 @@ ul > li {
 }
 
 ul > li:before {
+  @apply pixel;
   background-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAcAAAAHCAYAAADEUlfTAAAACXBIWXMAAC4jAAAuIwF4pT92AAAANUlEQVQImWP8sij2PwMOwAKlGbHI/WfCpYuBgYEBLskdu4iBgYHhPxKbAV0nivF4jWXE51oAaSYKByQ4Eh0AAAAASUVORK5CYII=');
   background-size: 100% 100%;
-
-  image-rendering: optimizeSpeed; /* STOP SMOOTHING, GIVE ME SPEED  */
-  image-rendering: -moz-crisp-edges; /* Firefox                        */
-  image-rendering: -o-crisp-edges; /* Opera                          */
-  image-rendering: -webkit-optimize-contrast; /* Chrome (and eventually Safari) */
-  image-rendering: pixelated; /* Chrome */
-  image-rendering: optimize-contrast; /* CSS3 Proposed                  */
-
   content: '';
   display: block;
   position: absolute;

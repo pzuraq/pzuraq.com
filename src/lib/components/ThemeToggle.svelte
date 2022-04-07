@@ -1,23 +1,65 @@
 <script lang="ts" context="module">
   let uuid = 0;
+  let globalHandlerExists = false;
+  const theme = writable<string>('system');
 </script>
 
 <script lang="ts">
-  import { createEventDispatcher } from 'svelte';
+  import { browser } from '$app/env';
+  import { onMount } from 'svelte';
+  import { writable } from 'svelte/store';
 
-  export let checked: boolean;
-
-  const dispatch = createEventDispatcher<{ change: boolean }>();
   const id = uuid++;
+
+  let prefersTheme: string;
+
+  if (browser) {
+    theme.set(localStorage.getItem('theme') ?? 'system');
+    prefersTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+  }
+
+  const handleGlobalShortcut = (e: KeyboardEvent) => {
+    if (e.code === 'KeyD' && e.ctrlKey && e.altKey) {
+      toggleTheme();
+    }
+  };
+
+  const toggleTheme = () => {
+    document.body.classList.remove($theme);
+    console.log(theme);
+
+    if ($theme === 'system') {
+      // If the theme is set to system, then set it to the preferred default
+      // theme and toggle based on that.
+      theme.set(prefersTheme);
+    }
+
+    theme.set($theme === 'light' ? 'dark' : 'light');
+
+    document.body.classList.add($theme);
+    localStorage.setItem('theme', $theme);
+  };
+
+  $: isDark = $theme === 'dark' || ($theme === 'system' && prefersTheme === 'dark');
+
+  onMount(() => {
+    if (globalHandlerExists) return;
+
+    globalHandlerExists = true;
+
+    document.addEventListener('keyup', handleGlobalShortcut);
+
+    return () => document.removeEventListener('keyup', handleGlobalShortcut);
+  });
 </script>
 
 <label class="toggle text-lg md:text-base" for="toggle-{id}">
   <input
     class="toggle__input"
-    {checked}
+    checked={isDark}
     type="checkbox"
     id="toggle-{id}"
-    on:change={() => dispatch('change', !checked)}
+    on:change={() => toggleTheme()}
   />
   <div class="toggle__fill" />
 </label>

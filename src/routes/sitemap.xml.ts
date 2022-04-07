@@ -29,6 +29,11 @@ const sitemap = (posts) => `<?xml version="1.0" encoding="UTF-8" ?>
     <priority>0.7</priority>
   </url>
   <url>
+    <loc>https://pzuraq.com/art</loc>
+    <changefreq>daily</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
     <loc>https://pzuraq.com/favs</loc>
     <changefreq>daily</changefreq>
     <priority>0.7</priority>
