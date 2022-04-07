@@ -4,7 +4,7 @@
 
 <div class="px-8 py-8 md:px-12 lg:px-20">
   <div class="max-w-2xl 2xl:max-w-3xl m-auto">
-    <div class="flex justify-between">
+    <div class="flex justify-between mb-1">
       <a href="/" class="text-link"> go back </a>
 
       <ThemeToggle />
