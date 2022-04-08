@@ -11,6 +11,12 @@
   export const load: Load = async ({ params }) => {
     const metadata = POST_META.find((m) => m.slug === params.post);
 
+    if (!metadata) {
+      return {
+        status: 404,
+      };
+    }
+
     const { default: component } = await import(
       `./_posts/${metadata.published}-${metadata.slug}.svx`
     );
