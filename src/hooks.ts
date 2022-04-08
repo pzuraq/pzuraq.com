@@ -46,6 +46,10 @@ export const handle: Handle = async ({ event, resolve }) => {
 
     if (redirect) {
       return Response.redirect(`${event.url.origin}${redirect.to}`, redirect.permanent ? 301 : 302);
+    } else {
+      event.locals.sentry?.captureException(
+        new Error(`Page not found: ${event.request.url.toString()}`),
+      );
     }
   }
 
@@ -53,7 +57,6 @@ export const handle: Handle = async ({ event, resolve }) => {
 };
 
 export const handleError: HandleError = async ({ event, error }) => {
-  if (event.locals.sentry) {
-    event.locals.sentry.captureException(error);
-  }
+  console.log('ERROR');
+  event.locals.sentry?.captureException(error);
 };
