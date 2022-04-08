@@ -31,7 +31,7 @@
     <h1 class="text-xl mb-0">{title}</h1>
 
     {#if message}
-      <div class="text-lg text-center">{message}</div>
+      <div class="text-lg text-center error-message">{message}</div>
     {/if}
   </div>
 </div>
