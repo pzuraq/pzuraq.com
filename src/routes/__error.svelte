@@ -2,7 +2,7 @@
   import type { ErrorLoad } from '@sveltejs/kit';
 
   export const load: ErrorLoad = ({ error, status }) => {
-    let title, message;
+    let title: string, message: string;
 
     if (status === 404) {
       title = "sorry, nebs couldn't find that page :(";
