@@ -17,7 +17,7 @@
   <meta name="twitter:site" content="@pzuraq" />
 </svelte:head>
 
-<h1 class="text-secondary text-base">A blog about (mostly) computery things</h1>
+<h1 class="text-secondary text-base">a blog about (mostly) computery things</h1>
 
 <hr />
 

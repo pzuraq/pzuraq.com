@@ -13,76 +13,76 @@ tagline: 'things I like and you might too'
 
 - <a href="https://www.gunnerkrigg.com/" class="no-underline">Gunnerkrigg Court</a>
 
-::: aside -mt-3
-My favorite webcomic, hands down. It's about a school steeped in technology built on magic
-(always a intriguing combination), the untamed forest it attempted and failed to subdue, and
-a girl caught in between worlds, trying to understand what led to this endless conflict.
-:::
+<aside class="-mt-3">
+  My favorite webcomic, hands down. It's about a school steeped in technology built on magic
+  (always a intriguing combination), the untamed forest it attempted and failed to subdue, and
+  a girl caught in between worlds, trying to understand what led to this endless conflict.
+</aside>
 
 - <a href="https://www.dresdencodak.com/" class="no-underline">Dresden Codak</a>
 
-::: aside -mt-3
-Wonderful explorations of science and cookies (among other things). One of the first places I
-encountered the idea of a technological singularity. Updates painfully slowly but it's worth it
-when it does.
-:::
+<aside class="-mt-3">
+  Wonderful explorations of science and cookies (among other things). One of the first places I
+  encountered the idea of a technological singularity. Updates painfully slowly but it's worth it
+  when it does.
+</aside>
 
 - <a href="https://killsixbilliondemons.com/comic/kill-six-billion-demons-chapter-1/" class="no-underline">Kill Six Billion Demons</a>
 
-::: aside -mt-3
-I love it when religious concepts and mythologies are reimagined, combined, and explored in completely
-different ways, and this is probably the best example of it that I've read in the past decade.
-:::
+<aside class="-mt-3">
+  I love it when religious concepts and mythologies are reimagined, combined, and explored in completely
+  different ways, and this is probably the best example of it that I've read in the past decade.
+</aside>
 
 ### Other Sites
 
 - <a href="https://qntm.org/" class="no-underline">Things of Interest</a>
 
-::: aside -mt-3
-A site that has been around in one form or another since the 90s, with some phenomenal fiction. I especially love [Ra](https://qntm.org/ra).
-:::
+<aside class="-mt-3">
+  A site that has been around in one form or another since the 90s, with some phenomenal fiction. I especially love [Ra](https://qntm.org/ra).
+</aside>
 
 - <a href="https://unsongbook.com/" class="no-underline">Unsong</a>
 
-::: aside -mt-3
-I started reading this a while back and stopped because it was so good, I knew I had to save it.
-Still on my list, I will be returning sooner rather than later.
-:::
+<aside class="-mt-3">
+  I started reading this a while back and stopped because it was so good, I knew I had to save it.
+  Still on my list, I will be returning sooner rather than later.
+</aside>
 
 ### Books
 
 - <a href="https://www.goodreads.com/book/show/2845024-anathem" class="no-underline">Anathem</a>
 
-::: aside -mt-3
-Everyone knows Snowcrash but this is the best Stephenson book I've read. Dense at first, it gets
-better. A world where religion formed around math and rationalism is interesting to say the least.
-:::
+<aside class="-mt-3">
+  Everyone knows Snowcrash but this is the best Stephenson book I've read. Dense at first, it gets
+  better. A world where religion formed around math and rationalism is interesting to say the least.
+</aside>
 
 - <a href="https://www.goodreads.com/series/112296-the-broken-earth" class="no-underline">The Broken Earth Trilogy</a>
 
-::: aside -mt-3
-Jemison is just an absolutely phenomenal author. This trilogy is such a great exploration of the
-structures of power, how they form and persist over time, and how we forget where they even came from.
-:::
+<aside class="-mt-3">
+  Jemison is just an absolutely phenomenal author. This trilogy is such a great exploration of the
+  structures of power, how they form and persist over time, and how we forget where they even came from.
+</aside>
 
 - <a href="https://www.goodreads.com/book/show/2296.Emergence" class="no-underline">Emergence: The Connected Lives of Ants, Brains, Cities, and Software</a>
 
-::: aside -mt-3
-Emergent phenomena are difficult to grasp conceptually at first, but once you do it puts a different lens
-on the way the world works. How things that can seem architected and carefully controlled can, in fact, be
-just the opposite, the confluence of many interelated and simple systems producing layers of complexity.
-:::
+<aside class="-mt-3">
+  Emergent phenomena are difficult to grasp conceptually at first, but once you do it puts a different lens
+  on the way the world works. How things that can seem architected and carefully controlled can, in fact, be
+  just the opposite, the confluence of many interelated and simple systems producing layers of complexity.
+</aside>
 
 - <a href="https://www.goodreads.com/book/show/43352954-this-is-how-you-lose-the-time-war" class="no-underline">This Is How You Lose The Time War</a>
 
-::: aside -mt-3
-This one was just such a fun romp through time, it's so great and imaginative overall. It's probably the
-first time I ever enjoyed reading the acknowledgements section too, somehow.
-:::
+<aside class="-mt-3">
+  This one was just such a fun romp through time, it's so great and imaginative overall. It's probably the
+  first time I ever enjoyed reading the acknowledgements section too, somehow.
+</aside>
 
 - <a href="https://www.goodreads.com/series/105428-la-passe-miroir" class="no-underline">The Mirror Visitor Quartet</a>
 
-::: aside -mt-3
-My absolute favorite fantasy series of the moment, incredibly unique and wonderful, full of intrigue and
-mystery and all of my favorite tropes.
-:::
+<aside class="-mt-3">
+  My absolute favorite fantasy series of the moment, incredibly unique and wonderful, full of intrigue and
+  mystery and all of my favorite tropes.
+</aside>

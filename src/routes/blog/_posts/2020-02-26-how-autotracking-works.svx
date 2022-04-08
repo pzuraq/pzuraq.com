@@ -208,9 +208,9 @@ We can use a clock like this to check for very simple changes. Is the number gre
 
 Tags represent state within the application. For each unique piece of updatable state that is added to the system, we create a tag and assign it to that state.
 
-::: aside
-Tags take their name from [HTTP ETags](https://en.wikipedia.org/wiki/HTTP_ETag), which were an optional part of the HTTP spec. ETags were essentially a way for browsers to check if anything had changed on a page before reloading it, and conceptually are very similar.
-:::
+<aside>
+Tags take their name from <a href="https://en.wikipedia.org/wiki/HTTP_ETag">HTTP ETags</a>, which were an optional part of the HTTP spec. ETags were essentially a way for browsers to check if anything had changed on a page before reloading it, and conceptually are very similar.
+</aside>
 
 Tags have a single value, which is a version from the clock. Whenenever we modify the state that tag represents, we dirty the tag. To do this, we increase the value of the clock, and then we assign its new value to the tag.
 
@@ -462,9 +462,9 @@ setOnTagDirtied(() => {
 
 This callback will be called whenever _any_ tracked property is dirtied, and allows us to schedule an update in frameworks. It also does not receive any information about the tag that was dirtied, so it cannot be abused to add event-based patterns back into the system. It is a one way notification that allows us to schedule a revalidation, so our output will always be in sync with the input, and will always update based on _usage_.
 
-::: aside
-Note: This API is currently called the `setPropertyDidChange` API in the Glimmer codebase, for historical reasons. I updated the name in this post to make it clearer what it does - it runs for any tag being dirtied, not just properties changing.
-:::
+<aside>
+Note: This API is currently called the <code>setPropertyDidChange</code> API in the Glimmer codebase, for historical reasons. I updated the name in this post to make it clearer what it does - it runs for any tag being dirtied, not just properties changing.
+</aside>
 
 ### Principle 4: Consistent State
 

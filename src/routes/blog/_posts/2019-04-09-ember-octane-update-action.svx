@@ -191,9 +191,9 @@ Finally, the authors of the decorator spec are explicitly _designing_ for this e
 
 With all this in mind, we believe that using a decorator is the best way to bind context, and that we shouldn't be mixing these concerns up into template helpers or syntax. This also neatly divides the responsibilities, so we have one tool for each job. Now, onto `{{on}}`!
 
-::: aside
-Note: There is an ongoing discussion about making a new decorator such as `@callback` or `@bound` to replace `@action` in the long run as well. Its functionality would be identical, sans-compatibility with old-school string actions, so the mental model is the same, as are all the other benefits, and this would primarily be about dropping the older "action" terminology and the baggage associated with it, and giving a more generic name to the functionality it provides. This new API would need to be RFC'd, so stay tuned!
-:::
+<aside>
+Note: There is an ongoing discussion about making a new decorator such as <code>@callback</code> or <code>@bound</code> to replace <code>@action</code> in the long run as well. Its functionality would be identical, sans-compatibility with old-school string actions, so the mental model is the same, as are all the other benefits, and this would primarily be about dropping the older "action" terminology and the baggage associated with it, and giving a more generic name to the functionality it provides. This new API would need to be RFC'd, so stay tuned!
+</aside>
 
 ## `{{on}}`
 

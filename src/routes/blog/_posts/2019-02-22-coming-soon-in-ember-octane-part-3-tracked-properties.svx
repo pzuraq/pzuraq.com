@@ -252,9 +252,9 @@ This means you can convert your applications one field at a time, in parts. It m
 
 Alright, let's once again take the new feature and put it to use! This time I'm going to take an example from the excellent [ember-cli-flash](https://github.com/poteto/ember-cli-flash) addon which is used for showing flash messages. This example is a bit more involved than previous ones, since I really wanted to demonstrate just how much tracked properties can help to clean up not only component code, but utility code as well.
 
-::: aside
-Note: I've also edited down some of the classes to show only the parts relevant to tracked properties, and this is _not_ a full conversion as there may be more tracked values used in other contexts which I did not add.
-:::
+<aside>
+Note: I've also edited down some of the classes to show only the parts relevant to tracked properties, and this is <em>not</em> a full conversion as there may be more tracked values used in other contexts which I did not add.
+</aside>
 
 ```js
 // ember-cli-flash/addon/flash/object.js

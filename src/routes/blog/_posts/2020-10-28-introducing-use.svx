@@ -359,9 +359,9 @@ Now we move on to the lifecycle portion of the resource, the `setup` and `teardo
 
 This is where we can put our non-declarative logic, such as starting the fetch request, handling it, and cancelling it. `setup` runs when the resource is first accessed, and `teardown` runs when the parent the resource is on is destroyed. These lifecycle hooks are also autotracked, so they'll _rerun_ whenever there are upstream changes, such as the positional argument passed in changing. By default, when something changes, the resources tears itself down and restarts, creating an entirely new instance that then calls `setup` again. So, in the case of our `FetchData` resource, if the URL we are fetching from ever changes we will destroy the resource, cancel the existing request, and create a new one for the new URL. Externally, this operation is entirely opaque - nothing else knows about it, they'll just see the `isLoading` property change back to `true` and react accordingly.
 
-::: aside
+<aside>
 Resources also allow us to implement an `update` hook. If this is implemented, then the resource is not torn down when changes occur, and the `update` hook is called instead. This allows users to manage the details of updates more directly, but also requires them to be more careful about how they do updates. When using the `update` hook its much easier to read state and then attempt to write to it, which is not allowed and will throw an error, for instance. This is why the default behavior is to create a new resource whenever a change occurs.
-:::
+</aside>
 
 Finally, we define the resource on our component with the `@use` decorator:
 
@@ -373,9 +373,9 @@ Finally, we define the resource on our component with the `@use` decorator:
 
 When we create a new resource in JavaScript like this, we pass it a function that generates the arguments passed to it. This function is tracked, which is how the resource knows to update whenever the values change.
 
-::: aside
-The args generator can return an array of positional args, or it can return an object containing `positional` and `named` args together. This way it matches usages in templates.
-:::
+<aside>
+The args generator can return an array of positional args, or it can return an object containing <code>positional</code> and <code>named</code> args together. This way it matches usages in templates.
+</aside>
 
 Overall the resource solution is a bit more verbose than the original one, but it solves all of the basic problems it had:
 

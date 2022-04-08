@@ -1,6 +1,5 @@
 import remarkGithub from 'remark-github';
 import remarkAbbr from 'remark-abbr';
-import remarkContainers from 'remark-containers';
 import rehypeSlug from 'rehype-slug';
 import rehypeAutolinkHeadings from 'rehype-autolink-headings';
 
@@ -21,7 +20,6 @@ export default {
       },
     ],
     remarkAbbr,
-    remarkContainers,
   ],
   rehypePlugins: [
     rehypeSlug,
