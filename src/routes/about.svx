@@ -13,7 +13,7 @@ My name is Chris and I work on the web. Some things I am and have been
 
 - Champion for adding [Decorators](https://github.com/tc39/proposal-decorators) to JavaScript
 - Lead frontend engineer at [Bitski](https://www.bitski.com/)
-- [Ember.js](https://emberjs.com/) core team member
+- [Ember.js](https://emberjs.com/) core team alumn
 - Former frontend engineer at [LinkedIn](https://linkedin.com), [Addepar](https://addepar.com/),
   Ticketfly (now [EventBrite](https://www.eventbrite.com/))
 - Maintainer of far too many NPM packages
