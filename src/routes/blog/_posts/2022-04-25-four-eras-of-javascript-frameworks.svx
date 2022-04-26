@@ -125,6 +125,7 @@ This last era of frameworks has really snuck up on me, personally. I think that'
 3. [Remix](https://remix.run/) (React)
 4. [SvelteKit](https://kit.svelte.dev/) (Svelte)
 5. [Gatsby](https://www.gatsbyjs.com/) (React)
+6. [Astro](https://astro.build/) (Any)
 
 These frameworks started up as the view-layers matured and solidified. Now that we all agreed that components were the core primitive to build on top of, it made sense to start standardizing other parts of the app - the router, the build system, the folder structure, etc. Slowly but surely, these meta-frameworks started to build up the same functionality that the all-in-one solutions of the first generation offered out of the box, picking the best patterns from their respective ecosystems and incorporating them as they matured.
 
