@@ -34,7 +34,7 @@ Prior to these, the state of the art had been libraries like jQuery and MooTools
 
 There also weren't many build tools to speak of in this era, at least that I was aware of. JavaScript didn't have modules yet (at least not standard ones), so there wasn't any way to import code. Everything was global, and it was pretty difficult to organize things.
 
-In this environment, it's understandable that JS was generally seen as a toy language and not something you'd write a full app in. The most common thing you would do was include jQuery, throw together some scripts for a few UI widgets, and call it a day. As time went on and XHR was introduced and popularized, people started to put parts of their UI flow into a single page, especially for complex flows that required multiple back and forth interactions between the client and the server, but the majority of the app stayed firmly on the server.
+In this environment, it's understandable that JS was generally seen as a toy language and not something you'd write a full app in. It was most commonly used for small, isolated UI widgets, adding a bit of flair to otherwise static sites. As time went on and XHR was introduced and popularized, people started to put parts of their UI flow into a single page, especially for complex flows that required multiple back and forth interactions between the client and the server, but the majority of the app stayed firmly on the server.
 
 This contrasted pretty significantly with mobile apps when they started to hit the scene. From the get go, mobile apps on iOS and Android were full applications written in Serious Languages™ like Objective C and Java. Moreover, they were fully API driven - all of the UI logic lived on the device, and communication with the server was purely in data formats. This resulted a much better UX and mobile apps exploded in popularity, leading quite directly to where we are today with debates about which is better, mobile or the web.
 
@@ -52,12 +52,13 @@ Around the late 2000's and early 2010's the first JS frameworks specifically des
 2. [Angular 1](https://angularjs.org/)
 3. [Knockout.js](https://knockoutjs.com/)
 4. [SproutCore](https://sproutcore.com/)
-5. [Ember.js](https://emberjs.com/)
-6. [Meteor.js](https://www.meteor.com/)
+5. [Dojo.js](https://dojotoolkit.org/)
+6. [Ember.js](https://emberjs.com/)
+7. [Meteor.js](https://www.meteor.com/)
 
-There are, of course, plenty of others, and probably some that were even bigger in some circles. These are the ones that I remember, mostly because I used them to prototype or build things and they were relatively popular.
+There are, of course, plenty of others, and probably some that were even bigger in some circles. These are the ones that I remember, mostly because I used them to prototype or build things and they were relatively popular. [Google Web Toolkit](https://en.wikipedia.org/wiki/Google_Web_Toolkit) also gets an honorable mention here, since it did help to pioneer this space (even though it wasn't really a Java<em>Script</em> framework).
 
-This was a generation of frameworks that were setting out into uncharted territory. On the one hand, what they were trying to do was highly ambitious, and plenty of people thought it would never really work. There were many detractors who thought that single-page JS apps (SPAs) were fundamentally worse, and in a lot of ways they were right - client side rendering meant that bots couldn't crawl these pages easily, and that users would have to wait seconds for apps to even start to paint. A lot of these apps were accessibility nightmares, and if you turned off JavaScript they wouldn't work at all.
+This was a cambrian explosion, a generation of frameworks that were setting out into uncharted territory. On the one hand, what they were trying to do was highly ambitious, and plenty of people thought it would never really work. There were many detractors who thought that single-page JS apps (SPAs) were fundamentally worse, and in a lot of ways they were right - client side rendering meant that bots couldn't crawl these pages easily, and that users would have to wait seconds for apps to even start to paint. A lot of these apps were accessibility nightmares, and if you turned off JavaScript they wouldn't work at all.
 
 On the other hand, we had no experience building full apps in JS, collectively, and so there were tons of competing ideas about the best ways to do it. Most frameworks tried to mimic was was popular on other platforms, so almost all of them ended up being some iteration of Model-View-\*: Model-View-Controller, Model-View-Producer, Model-View-ViewModel, etc. None of these really ended up working out though in the long run - they weren't particularly intuitive and they got really complicated really quickly.
 
