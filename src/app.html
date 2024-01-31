@@ -26,9 +26,38 @@
     />
 
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <script>
+      function handleError(error) {
+        if (error instanceof Error) {
+          error = {
+            message: error.message,
+            stack: error.stack,
+          };
+        }
+
+        fetch('/report-error', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ error: error }),
+        });
+      }
+
+      window.onerror = function (message, source, lineno, colno, error) {
+        handleError(error);
+      };
+
+      window.onunhandledrejection = function (event) {
+        handleError(event.reason);
+      };
+    </script>
+
     %svelte.head%
   </head>
-  <body class="system md:text-lg text-primary bg-inverse transition motion-reduce:transition-none duration-150">
+  <body
+    class="system md:text-lg text-primary bg-inverse transition motion-reduce:transition-none duration-150"
+  >
     <script>
       const theme = localStorage.getItem('theme');
 
