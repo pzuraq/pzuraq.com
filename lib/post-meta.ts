@@ -1,14 +1,15 @@
 import fs from 'fs-extra';
 import parseMD from 'parse-md';
 import { marked } from 'marked';
+import type { Plugin } from 'vite';
 
-const calculateReadingTime = (text) => {
+const calculateReadingTime = (text: string): number => {
   const wpm = 225;
-  const words = text.match(/(\w)+/g).length;
+  const words = text.match(/(\w)+/g)?.length ?? 0;
   return Math.ceil(words / wpm);
 };
 
-export default function postMeta() {
+export default function postMeta(): Plugin {
   const metaId = '$virtual/post-meta.json';
   const contentId = '$virtual/post-meta-with-html.json';
 
@@ -29,18 +30,19 @@ export default function postMeta() {
       const metadata = await Promise.all(
         files.map(async (file) => {
           const markdown = await fs.readFile(`./src/routes/blog/_posts/${file}`, 'utf8');
-          const { metadata, content } = parseMD(markdown);
-          const published = file.slice(0, 10);
-          const updated = metadata.updated ?? published;
-          const slug = file.slice(11, -4);
-          const readingTime = calculateReadingTime(content);
+          const parsed = parseMD(markdown);
 
-          const html = id === contentId ? marked.parse(content) : '';
+          const metadata = parsed.metadata as { updated?: string };
+          const published = file.slice(0, 10);
+          const slug = file.slice(11, -4);
+          const readingTime = calculateReadingTime(parsed.content);
+
+          const html = id === contentId ? marked.parse(parsed.content) : '';
 
           return {
             slug,
             published,
-            updated,
+            updated: published,
             readingTime,
             html,
             ...metadata,

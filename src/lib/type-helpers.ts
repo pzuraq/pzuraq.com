@@ -1,4 +1,4 @@
-import { dev } from '$app/env';
+import { dev } from '$app/environment';
 
 export function expect<T>(value: T | undefined | null, message: string): T {
   if (dev && (value === undefined || value === null)) {

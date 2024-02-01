@@ -7,16 +7,16 @@ These are exciting times in Ember! With Ember Octane just around the corner, nat
 
 This post will focus on changes since the original article and current best practices.  We'll be talking about:
 
-* [The Native Class Constructor Update RFC](#nativeclassconstructorupdaterfc)
-* [`new` vs. `create`](#newvscreate)
-* [`constructor` vs. `init`](#constructorvsinit)
-* [Class Fields vs. `extend()`](#classfieldsvsextend)
-* [Avoid Class Field Arrow Functions](#avoidclassfieldarrowfunctions)
-* [`super` vs. `_super()`](#supervssuper)
-* [When It's Ok to Use `extend()`](#whenitsoktouseextend)
-* [Avoiding `reopen` and `reopenClass`](#avoidingreopenandreopenclass)
-* [Avoiding `EmberObject`](#avoidingemberobject)
-* [Misc. Class Tips](#miscclasstips)
+* [The Native Class Constructor Update RFC](#native-class-constructor-update-rfc)
+* [`new` vs. `create`](#new-vs-create)
+* [`constructor` vs. `init`](#constructor-vs-init)
+* [Class Fields vs. `extend()`](#class-fields-vs-extend)
+* [Avoid Class Field Arrow Functions](#avoid-class-field-arrow-functions)
+* [`super` vs. `_super()`](#super-vs-_super)
+* [When It's Ok to Use `extend()`](#when-its-ok-to-use-extend)
+* [Avoiding `reopen` and `reopenClass`](#avoiding-reopen-and-reopenclass)
+* [Avoiding `EmberObject`](#avoiding-emberobject)
+* [Misc. Class Tips](#misc-class-tips)
 
 If you're new to native classes in Ember, the most comprehensive and up-to-date documentation is the [official Ember Decorators documentation site](https://ember-decorators.github.io/ember-decorators/docs/native-class-basics), where you can find a detailed guide to all of the differences in native classes and an overview of native class features. The [MDN documentation on classes](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Classes) is also a great resource for learning more about the basics of native classes and how things like inheritance in Javascript work in the first place (spoiler: it's sometimes just a _little_ bit confusing).
 

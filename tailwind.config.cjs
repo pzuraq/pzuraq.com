@@ -1,8 +1,18 @@
+const plugin = require('tailwindcss/plugin');
 const colors = require('tailwindcss/colors');
 
 module.exports = {
   content: ['./src/**/*.{html,js,svelte,ts,svx}'],
   important: true,
+  darkMode: 'off',
+  plugins: [
+    plugin(function ({ addVariant }) {
+      addVariant('dark', [
+        '@media (prefers-color-scheme: dark) { &:where(.system, .system *) }',
+        '&:where(.dark, .dark *)',
+      ]);
+    }),
+  ],
   theme: {
     colors: {
       primary: 'var(--color-primary)',
@@ -82,5 +92,4 @@ module.exports = {
       },
     },
   },
-  plugins: [],
 };

@@ -1,20 +1,20 @@
 import type { RequestHandler } from '@sveltejs/kit';
 import POST_META from '$virtual/post-meta.json';
 
-export const get: RequestHandler = () => {
+export const GET: RequestHandler = () => {
   const body = sitemap(POST_META);
 
   const headers = {
     'Cache-Control': 'max-age=0, s-maxage=3600',
     'Content-Type': 'application/xml',
   };
-  return {
+
+  return new Response(body, {
     headers,
-    body,
-  };
+  });
 };
 
-const sitemap = (posts) => `<?xml version="1.0" encoding="UTF-8" ?>
+const sitemap = (posts: PostMeta[]) => `<?xml version="1.0" encoding="UTF-8" ?>
 <urlset
   xmlns="https://www.sitemaps.org/schemas/sitemap/0.9"
   xmlns:news="https://www.google.com/schemas/sitemap-news/0.9"
@@ -45,7 +45,7 @@ const sitemap = (posts) => `<?xml version="1.0" encoding="UTF-8" ?>
   </url>
   ${posts
     .map(
-      (post) => `
+      (post: PostMeta) => `
   <url>
     <loc>https://pzuraq.com/blog/${post.slug}</loc>
     <changefreq>daily</changefreq>

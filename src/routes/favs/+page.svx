@@ -14,16 +14,17 @@ tagline: 'things I like and you might too'
 - <a href="https://www.gunnerkrigg.com/" class="no-underline">Gunnerkrigg Court</a>
 
 <aside class="-mt-3">
-  My favorite webcomic, hands down. It's about a school steeped in technology built on magic
-  (always a intriguing combination), the untamed forest it attempted and failed to subdue, and
-  a girl caught in between worlds, trying to understand what led to this endless conflict.
+  My favorite webcomic, hands down. It's about a school steeped in technology
+  built on magic, the untamed forest it attempted and failed to subdue, and a
+  girl caught in between worlds, trying to understand what led to this endless
+  conflict.
 </aside>
 
 - <a href="https://www.dresdencodak.com/" class="no-underline">Dresden Codak</a>
 
 <aside class="-mt-3">
   Wonderful explorations of science and cookies (among other things). One of the first places I
-  encountered the idea of a technological singularity. Updates painfully slowly but it's worth it
+  encountered the idea of a technological singularity. Updates painfully slowly, but worth the wait
   when it does.
 </aside>
 
@@ -39,7 +40,7 @@ tagline: 'things I like and you might too'
 - <a href="https://qntm.org/" class="no-underline">Things of Interest</a>
 
 <aside class="-mt-3">
-  A site that has been around in one form or another since the 90s, with some phenomenal fiction. I especially love [Ra](https://qntm.org/ra).
+  A site that has been around in one form or another since the 90s, with some phenomenal fiction. I especially love <a href="https://qntm.org/ra">Ra</a>.
 </aside>
 
 - <a href="https://unsongbook.com/" class="no-underline">Unsong</a>
@@ -54,23 +55,28 @@ tagline: 'things I like and you might too'
 - <a href="https://www.goodreads.com/book/show/2845024-anathem" class="no-underline">Anathem</a>
 
 <aside class="-mt-3">
-  Everyone knows Snowcrash but this is the best Stephenson book I've read. Dense at first, it gets
-  better. A world where religion formed around math and rationalism is interesting to say the least.
+  Everyone knows Snowcrash but this is the best Stephenson book I've read.
+  Extremely dense at first, but I couldn't put it down once I got into it. It's
+  about a world where religion formed around math and rationalism, which is an
+  interesting idea in a number of ways.
 </aside>
 
 - <a href="https://www.goodreads.com/series/112296-the-broken-earth" class="no-underline">The Broken Earth Trilogy</a>
 
 <aside class="-mt-3">
-  Jemison is just an absolutely phenomenal author. This trilogy is such a great exploration of the
-  structures of power, how they form and persist over time, and how we forget where they even came from.
+  Jemison is just an absolutely phenomenal author. This trilogy is such a great
+  exploration of the structures of power, how they form and persist over time,
+  and how we forget where they even came from.
 </aside>
 
 - <a href="https://www.goodreads.com/book/show/2296.Emergence" class="no-underline">Emergence: The Connected Lives of Ants, Brains, Cities, and Software</a>
 
 <aside class="-mt-3">
-  Emergent phenomena are difficult to grasp conceptually at first, but once you do it puts a different lens
-  on the way the world works. How things that can seem architected and carefully controlled can, in fact, be
-  just the opposite, the confluence of many interelated and simple systems producing layers of complexity.
+  Emergent phenomena are difficult to grasp conceptually at first, but once you
+  do it puts a different lens on the way the world works. How things that can
+  seem architected and carefully controlled can, in fact, be just the opposite,
+  the confluence of many interelated and simple systems producing layers of
+  complexity.
 </aside>
 
 - <a href="https://www.goodreads.com/book/show/43352954-this-is-how-you-lose-the-time-war" class="no-underline">This Is How You Lose The Time War</a>
@@ -83,6 +89,6 @@ tagline: 'things I like and you might too'
 - <a href="https://www.goodreads.com/series/105428-la-passe-miroir" class="no-underline">The Mirror Visitor Quartet</a>
 
 <aside class="-mt-3">
-  My absolute favorite fantasy series of the moment, incredibly unique and wonderful, full of intrigue and
-  mystery and all of my favorite tropes.
+  My absolute favorite fantasy series of the moment, incredibly unique and
+  wonderful, full of intrigue and mystery and all of my favorite tropes.
 </aside>

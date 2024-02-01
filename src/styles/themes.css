@@ -1,29 +1,30 @@
-@mixin light {
-  --color-primary: theme('colors.stone.700');
-  --color-secondary: theme('colors.stone.400');
-  --color-inverse: theme('colors.bone.50');
-  --color-inverse-secondary: theme('colors.bone.150');
-
-  .only-light {
-    display: initial;
+@layer base {
+  .light-theme {
+    --color-primary: theme('colors.stone.700');
+    --color-secondary: theme('colors.stone.400');
+    --color-inverse: theme('colors.bone.50');
+    --color-inverse-secondary: theme('colors.bone.150');
   }
 
-  .only-dark {
-    display: none;
+  .dark-theme {
+    --color-primary: theme('colors.white');
+    --color-secondary: theme('colors.gray.400');
+    --color-inverse: theme('colors.midnight.800');
+    --color-inverse-secondary: theme('colors.midnight.700');
   }
 }
 
-@mixin dark {
-  --color-primary: theme('colors.white');
-  --color-secondary: theme('colors.gray.400');
-  --color-inverse: theme('colors.midnight.800');
-  --color-inverse-secondary: theme('colors.midnight.700');
+.light,
+.system {
+  @apply light-theme;
+}
 
-  .only-light {
-    display: none;
-  }
+.dark {
+  @apply dark-theme;
+}
 
-  .only-dark {
-    display: initial;
+@media (prefers-color-scheme: dark) {
+  .system {
+    @apply dark-theme;
   }
 }
