@@ -1,28 +1,10 @@
-<script lang="ts" context="module">
-  import type { ErrorLoad } from '@sveltejs/kit';
+<script>
+  import { page } from '$app/stores';
 
-  export const load: ErrorLoad = ({ error, status }) => {
-    let title: string, message: string;
-
-    if (status === 404) {
-      title = "sorry, nebs couldn't find that page :(";
-    } else {
-      title = 'something went wrong';
-      message = error.message;
-    }
-
-    return {
-      props: {
-        title,
-        message,
-      },
-    };
-  };
-</script>
-
-<script lang="ts">
-  export let title: string;
-  export let message: string | undefined;
+  $: message = $page.error?.message;
+  $: is404 = message?.toLowerCase() === 'not found'
+  $: title =
+    is404 ? "sorry, nebs couldn't find that page :(" : 'something went wrong';
 </script>
 
 <div class="flex items-center justify-center p-8">
@@ -30,7 +12,7 @@
     <img src="/favicon-16x16.png" alt="The best doggo" class="w-32 m-auto my-8" />
     <h1 class="text-xl mb-0">{title}</h1>
 
-    {#if message}
+    {#if message && !is404}
       <div class="text-lg text-center error-message">{message}</div>
     {/if}
   </div>

@@ -11,17 +11,17 @@ const escapeString = (str: string) => {
     .replaceAll('&', '&amp;');
 };
 
-export const get: RequestHandler = () => {
+export const GET: RequestHandler = () => {
   const body = feed(POST_META);
 
   const headers = {
     'Cache-Control': 'max-age=0, s-maxage=3600',
     'Content-Type': 'application/xml',
   };
-  return {
+
+  return new Response(body, {
     headers,
-    body,
-  };
+  });
 };
 
 const feed = (postMeta: typeof POST_META) => {

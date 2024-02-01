@@ -16,10 +16,12 @@
   // been updated.
   navigating.subscribe((navigating) => {
     if (!navigating) return;
-    active = isActive(path, queryParams, navigating.to);
+    active = isActive(path, queryParams, navigating.to?.url);
   });
 
-  function isActive(path: string, queryParams: URLSearchParams | null, url: URL) {
+  function isActive(path: string, queryParams: URLSearchParams | null, url?: URL) {
+    if (!url) return false;
+
     let isActive = match ? !!url.pathname.match(match) : url.pathname.startsWith(path);
 
     if (excludedQueryParams) {
@@ -38,6 +40,6 @@
   }
 </script>
 
-<a sveltekit:prefetch {href} class="{className} {active ? activeClassName : ''}">
+<a {href} class="{className} {active ? activeClassName : ''}">
   <slot {active} />
 </a>

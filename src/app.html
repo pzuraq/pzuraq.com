@@ -1,14 +1,14 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
   <head>
     <meta charset="utf-8" />
     <meta name="description" content="" />
 
-    <link rel="apple-touch-icon" sizes="180x180" href="%svelte.assets%/apple-touch-icon.png" />
-    <link rel="icon" type="image/png" sizes="32x32" href="%svelte.assets%/favicon-32x32.png" />
-    <link rel="icon" type="image/png" sizes="16x16" href="%svelte.assets%/favicon-16x16.png" />
-    <link rel="manifest" href="%svelte.assets%/site.webmanifest" />
-    <link rel="mask-icon" href="%svelte.assets%/safari-pinned-tab.svg" color="#5bbad5" />
+    <link rel="apple-touch-icon" sizes="180x180" href="%sveltekit.assets%/apple-touch-icon.png" />
+    <link rel="icon" type="image/png" sizes="32x32" href="%sveltekit.assets%/favicon-32x32.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="%sveltekit.assets%/favicon-16x16.png" />
+    <link rel="manifest" href="%sveltekit.assets%/site.webmanifest" />
+    <link rel="mask-icon" href="%sveltekit.assets%/safari-pinned-tab.svg" color="#5bbad5" />
 
     <meta name="msapplication-TileColor" content="#603cba" />
     <meta name="theme-color" content="#ffffff" />
@@ -53,7 +53,7 @@
       };
     </script>
 
-    %svelte.head%
+    %sveltekit.head%
   </head>
   <body
     class="system md:text-lg text-primary bg-inverse transition motion-reduce:transition-none duration-150"
@@ -66,6 +66,6 @@
         document.body.classList.add(theme);
       }
     </script>
-    %svelte.body%
+    <div style="display: contents">%sveltekit.body%</div>
   </body>
 </html>

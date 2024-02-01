@@ -12,21 +12,21 @@
 <nav
   class="w-full p-4 md:p-8 md:pr-0 2xl:w-80 lg:w-64 md:w-36 md:fixed md:h-screen font-cursive text-center flex flex-col-reverse md:flex-col overflow-y-auto overflow-x-hidden"
 >
-  <a sveltekit:prefetch href="/art" class="-mt-8 -mb-4 mx-4 md:m-0 hover:scale-105">
+  <a href="/art" class="-mt-8 -mb-4 mx-4 md:m-0 hover:scale-105">
     <img
       src="/assets/store-day.png"
       alt="A peaceful little bookstore"
-      class="w-full only-light pixel aspect-square"
+      class="w-full dark:hidden pixel aspect-square"
     />
     <img
       src="/assets/store-night.png"
       alt="A peaceful little bookstore"
-      class="w-full only-dark pixel aspect-square"
+      class="w-full hidden dark:block pixel aspect-square"
     />
   </a>
 
   <div class="flex-grow -mt-10 md:mt-0">
-    <a sveltekit:prefetch href="/" class="lg:text-4xl text-3xl"> pzuraq </a>
+    <a href="/" class="lg:text-4xl text-3xl"> pzuraq </a>
     <br />
     <a
       href="http://ipa-reader.xyz/?text=z%C9%99-r%C3%A4k&voice=Joanna"
@@ -74,17 +74,8 @@
 </div>
 
 <style lang="postcss">
-  @mixin light {
-    --menu-btn-color: theme('colors.stone.400');
-  }
-
-  @mixin dark {
-    --menu-btn-color: var(--color-primary);
-  }
-
   .menu-btn {
-    @apply text-sm;
-    color: var(--menu-btn-color);
+    @apply text-sm text-stone-400 dark:text-primary;
   }
 
   :global(.main-nav-link) {

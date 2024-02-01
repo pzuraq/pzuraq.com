@@ -3,6 +3,12 @@ title: "On {{mut}} and 2-Way-Binding"
 tagline: ""
 ---
 
+<aside>
+  Note: This blog post didn't survive a migration from my old blog to my new one. I'm not really sure what happened there, so half of it is missing, but for posterity I'm keeping what I do have up here. Sorry about that!
+</aside>
+
+---
+
 I've been quiet on my blog for a while now, mostly because we've been heads down working on getting Octane out the door, and I made a promise to myself not to get overloaded and to wait until everything was shipped 🚢 before I started up again! However, there is a lot of work we have planned for post-Octane, some of which has been discussed in the [2019-2020 Roadmap](https://github.com/emberjs/rfcs/pull/519).
 
 In particular, I've been focusing on the plan to slim Ember down by (slowly) deprecating and removing old code that is no longer necessary due to the Octane programming model. We have a rough idea of which features should be removed, in what order, and around which versions, but a lot of the details are still up in the air and most of the core team has been too busy to actually hammer out the details in full RFCs. Still, it's good to communicate often and early, which is why we decided to open up a [number](https://github.com/emberjs/rfcs/issues/533) [of](https://github.com/emberjs/rfcs/issues/537) [issues](https://github.com/emberjs/rfcs/issues/534) [on](https://github.com/emberjs/rfcs/issues/535) [the](https://github.com/emberjs/rfcs/issues/536) [RFC](https://github.com/emberjs/rfcs/issues/540) [repo](https://github.com/emberjs/rfcs/issues/541) both to signal the intent to deprecate, and as invitation for community members to help co-author these RFCs with me (if anyone is interested in taking one of these on, let me know!)
@@ -31,3 +37,5 @@ So, totally understandably, many members of the community were vocal about the i
 > And I only learned this week that its use is actively discouraged.
 
 It was pretty clear after a bit of discussion that I'd made some missteps in this pre-RFC. I even (embarrassingly) wrongly claimed that we had removed `mut` from the official guides, when that wasn't true at all:
+
+_(And this is where I lost the rest of this)_

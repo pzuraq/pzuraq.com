@@ -1,6 +1,7 @@
 <script context="module" lang="ts">
-  import { formatPublishDate, formatTitle, formatReadingTime } from '$lib/format';
+  import { formatPublishDate, formatTitle } from '$lib/format';
   import POST_META from '$virtual/post-meta.json';
+  import ReadingTime from '$lib/components/ReadingTime.svelte';
 </script>
 
 <svelte:head>
@@ -39,7 +40,7 @@
       {/if}
 
       <span class="text-secondary text-sm font-cursive">
-        {formatPublishDate(blogPost.published)} • {@html formatReadingTime(blogPost.readingTime)}
+        {formatPublishDate(blogPost.published)} • <span class="mr-1"><ReadingTime readingTime={blogPost.readingTime}/></span>
       </span>
     </a>
   </div>

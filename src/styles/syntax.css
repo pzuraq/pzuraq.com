@@ -28,46 +28,48 @@
  * --syntax-cursor-line: hsla(230, 8%, 24%, 0.05);
  */
 
-@mixin light {
-  --code-border: theme('colors.bone.200');
-  --code-inline-color: theme('colors.indigo.500');
-  --code-syntax-fg: theme('colors.stone.700');
-  --code-syntax-bg: theme('colors.bone.100');
+@layer base {
+  .light-theme {
+    --code-border: theme('colors.bone.200');
+    --code-inline-color: theme('colors.indigo.500');
+    --code-syntax-fg: theme('colors.stone.700');
+    --code-syntax-bg: theme('colors.bone.100');
 
-  --code-keyword-color: theme('colors.plum.500');
+    --code-keyword-color: theme('colors.plum.500');
 
-  /* class names, constants */
-  --code-class-color: theme('colors.ochre.600');
+    /* class names, constants */
+    --code-class-color: theme('colors.ochre.600');
 
-  /* property */
-  --code-property-color: theme('colors.ochre.700');
+    /* property */
+    --code-property-color: theme('colors.ochre.700');
 
-  /* strings, regex */
-  --code-string-color: theme('colors.indigo.500');
+    /* strings, regex */
+    --code-string-color: theme('colors.indigo.500');
 
-  /* methods, tokens */
-  --code-method-color: theme('colors.blue.400');
-}
+    /* methods, tokens */
+    --code-method-color: theme('colors.blue.400');
+  }
 
-@mixin dark {
-  --code-border: theme('colors.midnight.600');
-  --code-inline-color: theme('colors.ochre.300');
-  --code-syntax-fg: theme('colors.white');
-  --code-syntax-bg: theme('colors.midnight.700');
+  .dark-theme {
+    --code-border: theme('colors.midnight.600');
+    --code-inline-color: theme('colors.ochre.300');
+    --code-syntax-fg: theme('colors.white');
+    --code-syntax-bg: theme('colors.midnight.700');
 
-  --code-keyword-color: theme('colors.plum.300');
+    --code-keyword-color: theme('colors.plum.300');
 
-  /* class names, constants */
-  --code-class-color: theme('colors.ochre.400');
+    /* class names, constants */
+    --code-class-color: theme('colors.ochre.400');
 
-  /* property */
-  --code-property-color: theme('colors.ochre.600');
+    /* property */
+    --code-property-color: theme('colors.ochre.600');
 
-  /* strings, regex */
-  --code-string-color: theme('colors.indigo.100');
+    /* strings, regex */
+    --code-string-color: theme('colors.indigo.100');
 
-  /* methods, tokens */
-  --code-method-color: theme('colors.blue.300');
+    /* methods, tokens */
+    --code-method-color: theme('colors.blue.300');
+  }
 }
 
 code[class*='language-'],

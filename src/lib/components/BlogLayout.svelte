@@ -2,7 +2,9 @@
   import { formatTitle } from '$lib/format';
   import { page } from '$app/stores';
 
+  /** @type {string} */
   export let title;
+  /** @type {string} */
   export let tagline;
 
   $: formattedTitle = title ? formatTitle(title) : '';

@@ -5,7 +5,7 @@
 </script>
 
 <script lang="ts">
-  import { browser } from '$app/env';
+  import { browser } from '$app/environment';
   import { onMount } from 'svelte';
   import { writable } from 'svelte/store';
 
@@ -64,16 +64,8 @@
   <div class="toggle__fill" />
 </label>
 
-<style>
-  @mixin light {
-    --toggle-foreground: theme('colors.white');
-    --toggle-background: theme('colors.stone.150');
-  }
+<style lang="postcss">
 
-  @mixin dark {
-    --toggle-foreground: theme('colors.midnight.800');
-    --toggle-background: theme('colors.midnight.600');
-  }
   .toggle {
     --width: 3em;
     --height: calc(var(--width) / 2);
@@ -88,12 +80,12 @@
   }
 
   .toggle__fill {
+    @apply bg-stone-150 dark:bg-midnight-600;
     image-rendering: pixelated;
     background-image: url('/assets/sun.svg'), url('/assets/moon.svg');
     background-repeat: no-repeat, no-repeat;
     background-position: top 0.3em right 0.4em, top 0.385em left 0.5em;
     background-size: 0.85em, 0.75em;
-    background-color: var(--toggle-background);
     position: relative;
     width: var(--width);
     height: var(--height);
@@ -103,13 +95,13 @@
   }
 
   .toggle__fill::after {
+    @apply bg-white dark:bg-midnight-800;
     content: '';
     position: absolute;
     top: 2px;
     left: 2px;
     height: calc(var(--height) - 4px);
     width: calc(var(--height) - 4px);
-    background: var(--toggle-foreground);
     border-radius: var(--border-radius);
     transition: transform 0.2s;
     box-shadow: 0 0 1px 1px rgb(0 0 0 / 5%);
