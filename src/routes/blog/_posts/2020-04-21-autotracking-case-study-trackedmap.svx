@@ -171,7 +171,7 @@ Now that we know what `TrackedMap` is, and why we need it, how do we build it?
 
 The first thing we'll need is a way to add tracked values _dynamically_. `@tracked` gives us a way to define properties that we know should be mutable ahead of time, but with a `Map` any number of keys can be defined over time, and we need to be able to track changes to all of them.
 
-It turns out, we don't need a new public API to do this. We can using `@tracked` to create a class whose sole purpose is to act as a storage cell:
+It turns out, we don't need a new public API to do this. We can use `@tracked` to create a class whose sole purpose is to act as a storage cell:
 
 ```js
 class Cell {
