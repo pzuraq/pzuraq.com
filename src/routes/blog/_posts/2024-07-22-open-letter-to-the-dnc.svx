@@ -1,0 +1,55 @@
+---
+title: 'An Open Letter to the DNC'
+tagline: ''
+---
+
+I normally stick to programming on this blog, but the events of the last few
+weeks have been _somewhat_ distracting. I felt early on that it was the best
+choice for President Biden to step down, but I also understood that this was a
+very difficult choice. Not just because it's so late in the race, but also
+because our process simply does not allow us to work things out without a long,
+protracted, public conversation that can be very embarrassing.
+
+I've had some conversations these past few weeks with fellow Democrats that felt
+downright Trumpian. The impulse has been toward unity, toward strength, toward
+not airing our dirty laundry. But I, and many others, felt like we were heading
+toward disaster, and so we pressed on.
+
+In the future, I would like to avoid this type of situation altogether. I think
+that a huge part of this comes down to _process_, and so I have some thoughts
+about how the process could be improved. I am no political scholar here so I
+could be very wrong, but I feel that I have to put this out there somewhere,
+and I'm honestly not really sure what the best way to participate is. So, here
+it is, an open letter to the DNC.
+
+---
+
+Hello,
+
+So I am really excited with the most recent turn of events, but as a regular Democratic voter and millenial, not as happy with the way we got here. It was a nail-biter, and I think it shows how we really need a better system for picking the Democratic nominee in the future so we can avoid last minute changes like this.
+
+So, some analysis and suggestions. First, the issues:
+
+1. The staggered nature of primaries in each state means that early primaries have a much bigger effect than later ones. Early primaries can narrow the field before people in later primaries have had a chance to vote, and this means that we just don't have good information on the will of the voters. That was a major concern before Biden dropped out because this year there was low primary engagement as well. Ideally we would have a process that allowed us to get more real information here about how Democrats are feeling.
+
+2. The change after the '68 convention that led to the current system was well-intentioned and solved one issue, but caused another. It's no longer possible for the party to easily make _tactical_ decisions during the election itself. It was a risk for Biden to drop out, but sometimes we need to take risks during a campaign in order to win. The current system makes risk taking difficult though, because to do so, we need a long drawn out conversation that shows a lack of unity.
+
+   This is fundamentally a _coordination_ problem. It's much easier to get a few thousand people in a room to agree on a direction and present a unified front than to get millions of Democrats across the country together to do so. So, there has been pressure to ignore that and stay-the-course. This time the decision was so clear that we could not avoid that conversation, but ideally, we would have a system that allowed us to make tactical maneuvers, such as changing a candidate, without such a drawn out and messy conversation needing to happen.
+
+3. The current system is very predictable since we know early on who the nominee will be. That gives the media, the pundits, and the base of the opposition plenty of time to pull together their hatchet jobs and hit pieces against our candidates, and really focus on character assassination.
+
+   Hillary Clinton is a great example of how this process works. They had been working on her for decades, with small hit pieces, think pieces, articles, "scandals", etc. In 2016 when most Republicans heard her name, they just had a general sense of repugnance, but it was not for any specific thing. Moreso, it was because they had heard her name so many times in passing, and always in a negative way. Obviously Clinton was a particularly bad case of this, with 20+ years to lock these negative feelings in, but this strategy requires _time_, and 8-12 months is a hell of lot more time than 4.
+
+With those laid out, here are some suggestions for process change. I think these could be done independently or together.
+
+1. Switch to ranked choice OR approval voting for primaries (See [this video](https://www.youtube.com/watch?v=orybDrUj4vA) for a quick breakdown of approval voting). This would fix problem 1 because there would no longer be a reason for a candidate to drop out early or for primary voters in later states to not participate. It would also help with problem 2, because if something should happen to the prospective nominee later in the process, we would have more information about who voters wanted as their _second_ choice, and third, and so on. Who would be the nominee if Biden dropped was a major concern this time, so having that information for the party to decide would be immensely helpful moving forward.
+
+   Approval voting works here quite well because it is simpler than ranked-choice, but does give us this information (it's basically asking "would you vote for this person if they were at the top" for every candidate, which is kind of what we want to know.) It also would give us information about how the current incumbent is really doing, and while that could be a bad look in some years, it could _also_ be really helpful in some, because it could show the best path forward while switching from an unpopular incumbent if necessary.
+
+2. Hold primaries on the same day nation-wide, especially if they can be held closer to the convention (e.g. May, June). This is harder than the first choice I'm sure, I'm guessing part of the reason they're at different times is due to different state rules that the party cannot control, but if it is possible this would help to prevent issues 1 and 3. Issue 1 because everyone would be voting all at once, so earlier states could not affect later ones, and issue 3 because doing so later in the year would give less time in general for the media to do its thing.
+
+3. Reconsider the binding rules for delegates to the convention. This is definitely the most risky change, because it does mean that we would be partially rolling back the changes from '68 and could make it feel like the party is run by insiders, but it could also help with issue 2 the most. I think that combined with change 1, delegates would have a lot more information about what their voters actually want, and could demonstrate that if they don't choose the _top_ choice from their state, they did choose the second or third choice.
+
+   One option here would be to say that delegates can choose anyone out of the top 3-5 candidates from their state, based on approval rating (another reason approval voting would be better than ranked choice here, this is much easier to calculate and demonstrate to voters, so they see that party officials are acting in good faith). This way, there is flexibility _guided_ by the voters, but ultimately a choice can be made by the people _actually running the campaign_. And, most importantly, that choice can be made together and presented in unity, so we do not have a month long public process that feels like it could shatter the party.
+
+I hope these suggestions help, I would really like to see reforms here as I think they could help us prevent these issues in the future.
