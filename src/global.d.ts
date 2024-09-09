@@ -5,6 +5,7 @@ interface PostMeta {
   updated: string;
   readingTime: number;
   tagline?: string;
+  hide?: boolean;
 
   [key: string]: string;
 }

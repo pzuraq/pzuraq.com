@@ -22,7 +22,7 @@
 
 <hr />
 
-{#each POST_META as blogPost}
+{#each POST_META.filter((m) => !m.hide) as blogPost}
   <div class="mb-8 text-center">
     <a href="/blog/{blogPost.slug}">
       <span class="text-2xl font-bold font-cursive hover:text-ochre-500"
@@ -40,7 +40,8 @@
       {/if}
 
       <span class="text-secondary text-sm font-cursive">
-        {formatPublishDate(blogPost.published)} • <span class="mr-1"><ReadingTime readingTime={blogPost.readingTime}/></span>
+        {formatPublishDate(blogPost.published)} •
+        <span class="mr-1"><ReadingTime readingTime={blogPost.readingTime} /></span>
       </span>
     </a>
   </div>

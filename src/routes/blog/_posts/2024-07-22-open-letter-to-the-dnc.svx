@@ -1,6 +1,7 @@
 ---
 title: 'An Open Letter to the DNC'
 tagline: ''
+hide: true
 ---
 
 I normally stick to programming on this blog, but the events of the last few
