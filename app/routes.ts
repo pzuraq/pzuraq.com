@@ -9,6 +9,8 @@ const posts = fs
 export default [
   index('routes/home.tsx'),
   route('blog', 'routes/blog-layout.tsx', posts),
+  route('archive', 'routes/archive.tsx'),
+  route('archive/older', 'routes/archive-older.tsx'),
   route('404', 'routes/not-found.tsx'),
   route('about', 'routes/about.tsx'),
   route('art', 'routes/art.tsx'),

@@ -1,6 +1,7 @@
 ---
 title: 'Introducing @use'
 tagline: 'An atomic abstraction for application lifecycle'
+archived: true
 ---
 
 At the end of last year, I submitted an RFC, written by Yehuda Katz and myself, that was attempting to plug some gaps we were seeing in Ember's programming model - the [`@use` and Resources RFC](https://github.com/emberjs/rfcs/pull/567). The main gaps we were seeing were with component lifecycle hooks, which had been removed in Ember Octane. Leading up to Octane, most of the use cases for lifecycle hooks that we found really fell into two categories - either it was _derived state_ and could be better modeled with getters and tracked properties, or it was _DOM modification_ and so could be handled by Ember's new modifier APIs. But it became apparent eventually that there were a number of other use cases that didn't really fit into these buckets really neatly. The end result was that folks were either using modifiers to modify things _other than_ the DOM, which felt like it was a mixing of concerns (and caused issues with, for instance SSR, where modifiers do not run at all), or that they were struggling to figure ways to turn these into "derived state". I saw quite a few call-a-function-from-a-getter type patterns around that time, and that felt all sorts of off to me.

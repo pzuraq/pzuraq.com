@@ -12,6 +12,8 @@ export default {
   ssr: false,
   prerender: [
     '/',
+    '/archive',
+    '/archive/older',
     '/about',
     '/art',
     '/favs',

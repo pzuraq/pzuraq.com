@@ -15,7 +15,7 @@ const slugs = fs
   .map((file) => file.slice(11, -4));
 
 const redirects = [
-  '/blog / 302',
+  '/blog /archive 302',
   '/thinking-with-autotracking-what-makes-a-good-reactive-system /blog/what-makes-a-good-reactive-system 301',
   '/thinking-with-autotracking-what-is-reactivity /blog/what-is-reactivity 301',
   '/coming-soon-in-ember-octane /blog/coming-soon-in-ember-octane-part-4-modifiers 301',

@@ -40,9 +40,17 @@ export default component(function Nav() {
             menuOpen.value ? '' : 'hidden'
           }`}
         >
-          <NavLink href="/" match={/^\/(blog\/.*)?$/} className="main-nav-link">
+          <NavLink href="/" match={/^\/$/} className="main-nav-link">
             <div className="square" />
-            blog
+            home
+          </NavLink>
+          <NavLink
+            href="/archive"
+            match={/^\/(archive(\/.*)?|blog\/.*)$/}
+            className="main-nav-link"
+          >
+            <div className="square" />
+            archive
           </NavLink>
           <NavLink href="/favs" className="main-nav-link">
             <div className="square" />

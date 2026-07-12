@@ -1,56 +1,43 @@
 import { Link } from 'react-router';
 import POST_META from '$virtual/post-meta.json';
+import LatestPost from '$virtual/latest-post';
 
-import ReadingTime from '~/components/ReadingTime';
 import { formatPublishDate, formatTitle } from '~/lib/format';
+import { pageMeta } from '~/lib/page-meta';
+
+const latest = POST_META.find((m) => !m.hide && !m.archived)!;
 
 export function meta() {
-  return [
-    { title: 'pzuraq | blog' },
-    { property: 'og:url', content: 'https://www.pzuraq.com' },
-    { property: 'og:type', content: 'website' },
-    { property: 'og:title', content: 'pzuraq' },
-    { property: 'og:image', content: 'https://www.pzuraq.com/assets/og-image.png' },
-    { property: 'og:description', content: 'A blog about (mostly) computery things' },
-    { name: 'twitter:image', content: 'https://www.pzuraq.com/assets/og-image.png' },
-    { name: 'twitter:card', content: 'summary_large_image' },
-    { name: 'twitter:site', content: '@pzuraq' },
-  ];
+  return pageMeta({ title: latest.title, tagline: latest.tagline, pathname: '/' });
 }
 
 export default function Home() {
+  const title = formatTitle(latest.title);
+  const published = formatPublishDate(latest.published);
+
   return (
     <>
-      <h1 className="text-secondary text-base">a blog about (mostly) computery things</h1>
+      <span className="text-secondary font-cursive relative -top-8 md:inline hidden">
+        {published}
+      </span>
+
+      <h1 className="text-center">{title}</h1>
+
+      <span className="text-secondary font-cursive relative block text-center text-sm md:hidden -mb-2 -mt-1">
+        {published}
+      </span>
 
       <hr />
 
-      {POST_META.filter((m) => !m.hide).map((blogPost) => (
-        <div key={blogPost.slug} className="mb-8 text-center">
-          <Link to={`/blog/${blogPost.slug}`}>
-            <span className="text-2xl font-bold font-cursive hover:text-ochre-500">
-              {formatTitle(blogPost.title)}
-            </span>
+      <div className="blog-content">
+        <LatestPost />
+      </div>
 
-            <br />
+      <hr />
 
-            {blogPost.tagline && (
-              <>
-                <span className="text-sm my-1">{blogPost.tagline}</span>
-
-                <br />
-              </>
-            )}
-
-            <span className="text-secondary text-sm font-cursive">
-              {formatPublishDate(blogPost.published)} •{' '}
-              <span className="mr-1">
-                <ReadingTime readingTime={blogPost.readingTime} />
-              </span>
-            </span>
-          </Link>
-        </div>
-      ))}
+      <div className="text-center text-link pt-8 pb-12">
+        <Link to="/archive"> read some more </Link>
+      </div>
     </>
   );
 }

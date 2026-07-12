@@ -6,6 +6,7 @@ interface PostMeta {
   readingTime: number;
   tagline?: string;
   hide?: boolean;
+  archived?: boolean;
 }
 
 declare module '$virtual/post-meta.json' {
@@ -18,6 +19,13 @@ declare module '$virtual/post-meta-with-html.json' {
   const POST_META: (PostMeta & { html: string })[];
 
   export default POST_META;
+}
+
+declare module '$virtual/latest-post' {
+  import type { FunctionComponent } from 'react';
+
+  const Component: FunctionComponent<Record<string, unknown>>;
+  export default Component;
 }
 
 declare module '*.mdx' {

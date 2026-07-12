@@ -55,7 +55,7 @@ export default function BlogLayout() {
       <hr />
 
       <div className="text-center text-link pt-8 pb-12">
-        <Link to="/"> read some more </Link>
+        <Link to="/archive"> read some more </Link>
       </div>
     </>
   );
