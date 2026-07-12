@@ -1,0 +1,3 @@
+# The prerendered RSS feed is an extensionless file, so set its content type
+/rss
+  Content-Type: application/xml

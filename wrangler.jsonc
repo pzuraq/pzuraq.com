@@ -1,0 +1,20 @@
+/**
+ * The site is fully prerendered, so this Worker is assets-only: every request
+ * is served directly from Cloudflare's edge as a static asset with no Worker
+ * script (and therefore no cold starts). Redirects and custom headers are
+ * handled by the generated `_redirects` file and `public/_headers`.
+ *
+ * For more details on how to configure Wrangler, refer to:
+ * https://developers.cloudflare.com/workers/wrangler/configuration/
+ */
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "pzuraq-com",
+  "compatibility_date": "2026-07-12",
+  "assets": {
+    "directory": "./build/client",
+    "not_found_handling": "404-page",
+    // Keep the old SvelteKit-era URLs (no trailing slashes)
+    "html_handling": "drop-trailing-slash",
+  },
+}

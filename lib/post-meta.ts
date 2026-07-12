@@ -1,7 +1,9 @@
-import fs from 'fs-extra';
+import fs from 'node:fs/promises';
 import parseMD from 'parse-md';
 import { marked } from 'marked';
 import type { Plugin } from 'vite';
+
+const POSTS_DIR = './app/posts';
 
 const calculateReadingTime = (text: string): number => {
   const wpm = 225;
@@ -26,10 +28,10 @@ export default function postMeta(): Plugin {
     async load(id) {
       if (id !== metaId && id !== contentId) return;
 
-      const files = await fs.readdir('./src/routes/blog/_posts');
+      const files = (await fs.readdir(POSTS_DIR)).filter((file) => file.endsWith('.mdx'));
       const metadata = await Promise.all(
         files.map(async (file) => {
-          const markdown = await fs.readFile(`./src/routes/blog/_posts/${file}`, 'utf8');
+          const markdown = await fs.readFile(`${POSTS_DIR}/${file}`, 'utf8');
           const parsed = parseMD(markdown);
 
           const metadata = parsed.metadata as { updated?: string };
@@ -37,7 +39,7 @@ export default function postMeta(): Plugin {
           const slug = file.slice(11, -4);
           const readingTime = calculateReadingTime(parsed.content);
 
-          const html = id === contentId ? marked.parse(parsed.content) : '';
+          const html = id === contentId ? await marked.parse(parsed.content) : '';
 
           return {
             slug,

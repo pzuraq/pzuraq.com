@@ -1,0 +1,28 @@
+/* Runtime theme variables. The body always has one of the `light`, `dark`, or
+   `system` classes; `system` follows the OS color scheme preference. The
+   `--theme-*` variables are wired into Tailwind's semantic colors (primary,
+   secondary, inverse, inverse-secondary) via `@theme inline` in app.css. */
+
+.light,
+.system {
+  --theme-primary: var(--color-stone-700);
+  --theme-secondary: var(--color-stone-400);
+  --theme-inverse: var(--color-bone-50);
+  --theme-inverse-secondary: var(--color-bone-150);
+}
+
+.dark {
+  --theme-primary: var(--color-white);
+  --theme-secondary: var(--color-gray-400);
+  --theme-inverse: var(--color-midnight-800);
+  --theme-inverse-secondary: var(--color-midnight-700);
+}
+
+@media (prefers-color-scheme: dark) {
+  .system {
+    --theme-primary: var(--color-white);
+    --theme-secondary: var(--color-gray-400);
+    --theme-inverse: var(--color-midnight-800);
+    --theme-inverse-secondary: var(--color-midnight-700);
+  }
+}
